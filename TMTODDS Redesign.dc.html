@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<meta name="design_doc_mode" content="canvas">
+<style>
+  *{box-sizing:border-box;}
+  body{margin:0;-webkit-font-smoothing:antialiased;}
+  .scr{scrollbar-width:none;}
+  .scr::-webkit-scrollbar{display:none;}
+  @keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.4;transform:scale(.85);}}
+</style>
+</helmet>
+
+<!-- ============ TITLE / LEGEND ============ -->
+<div style="position:absolute; left:0; top:0; width:1200px;">
+  <div data-drags-parent="1" style="cursor:grab;">
+    <div style="font-family:'Archivo',sans-serif; font-weight:800; font-size:12px; letter-spacing:.18em; text-transform:uppercase; color:#7a8290; margin-bottom:6px;">Redesign Proposal · Mobile-first</div>
+    <h1 style="font-family:'Anton',sans-serif; font-size:46px; line-height:.95; letter-spacing:.01em; color:#14171D; margin:0 0 10px; text-transform:uppercase;">TMTODDS <span style="color:#6f7a18;">/ Bold Sportsbook</span></h1>
+    <p style="font-family:'Archivo',sans-serif; font-size:15px; line-height:1.5; color:#555c66; margin:0 0 20px; max-width:680px;">Near-black surfaces, one electric lime accent, and a hard-working type system tuned for odds &amp; proof. Same content as today, sharper hierarchy: see what it's about &rarr; trust the proof &rarr; pick a package &rarr; get into the members' lounge.</p>
+    <div style="display:flex; gap:28px; flex-wrap:wrap; align-items:flex-start;">
+      <div>
+        <div style="font-family:'Archivo'; font-weight:800; font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:#9aa0a8; margin-bottom:8px;">Palette</div>
+        <div style="display:flex; gap:7px;">
+          <div style="width:34px; height:34px; border-radius:8px; background:#0B0C0F; border:1px solid #d8dadd;"></div>
+          <div style="width:34px; height:34px; border-radius:8px; background:#14171D;"></div>
+          <div style="width:34px; height:34px; border-radius:8px; background:#CCFF33;"></div>
+          <div style="width:34px; height:34px; border-radius:8px; background:#57D9FF;"></div>
+          <div style="width:34px; height:34px; border-radius:8px; background:#F5C451;"></div>
+          <div style="width:34px; height:34px; border-radius:8px; background:#34E08A;"></div>
+          <div style="width:34px; height:34px; border-radius:8px; background:#FF4D4D;"></div>
+        </div>
+      </div>
+      <div>
+        <div style="font-family:'Archivo'; font-weight:800; font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:#9aa0a8; margin-bottom:8px;">Type</div>
+        <div style="display:flex; gap:18px; align-items:baseline;">
+          <span style="font-family:'Anton'; font-size:26px; color:#14171D;">Anton</span>
+          <span style="font-family:'Archivo'; font-weight:800; font-size:20px; color:#14171D;">Archivo</span>
+          <span style="font-family:'JetBrains Mono'; font-weight:700; font-size:18px; color:#14171D;">1.72</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 01 · HOME ============ -->
+<div style="position:absolute; left:0; top:230px; width:414px;">
+  <div data-drags-parent="1" style="font-family:'Archivo'; font-weight:800; font-size:13px; letter-spacing:.1em; text-transform:uppercase; color:#5B636F; margin-bottom:14px; cursor:grab;">01 · Home</div>
+  <div style="width:414px; background:#000; border-radius:52px; padding:11px; box-shadow:0 40px 90px -25px rgba(0,0,0,.55), 0 0 0 2px #1c1c1e;">
+    <div style="width:392px; height:846px; background:#0B0C0F; border-radius:42px; overflow:hidden; position:relative; display:flex; flex-direction:column; font-family:'Archivo',sans-serif;" data-screen-label="Home">
+      <div style="position:absolute; top:11px; left:50%; transform:translateX(-50%); width:120px; height:32px; background:#000; border-radius:20px; z-index:30;"></div>
+      <!-- status bar -->
+      <div style="height:52px; flex-shrink:0; display:flex; align-items:flex-end; justify-content:space-between; padding:0 28px 7px; z-index:20;">
+        <span style="font-family:'Archivo'; font-weight:700; font-size:15px; color:#F2F4F7;">9:41</span>
+        <div style="display:flex; align-items:center; gap:7px; color:#F2F4F7; font-size:15px;"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-full"></i></div>
+      </div>
+      <div class="scr" style="flex:1; overflow-y:auto;">
+        <!-- app bar -->
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:6px 20px 12px;">
+          <div style="display:flex; align-items:center; gap:9px;">
+            <div style="width:27px; height:27px; border-radius:8px; background:#CCFF33; display:flex; align-items:center; justify-content:center;"><i class="ph-bold ph-lightning" style="font-size:16px; color:#0B0C0F;"></i></div>
+            <span style="font-family:'Anton'; font-size:20px; letter-spacing:.04em; color:#F2F4F7;">TMTODDS</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:11px;">
+            <span style="font-family:'JetBrains Mono'; font-size:10px; font-weight:700; color:#9AA3B2; border:1px solid rgba(255,255,255,.16); border-radius:20px; padding:3px 8px;">18+</span>
+            <i class="ph ph-user-circle" style="font-size:27px; color:#9AA3B2;"></i>
+          </div>
+        </div>
+        <!-- hero -->
+        <div style="position:relative; margin:0 16px; border-radius:24px; overflow:hidden; height:392px; background:repeating-linear-gradient(135deg,#15181F 0 14px,#191D26 14px 28px);">
+          <div style="position:absolute; inset:0; background:linear-gradient(180deg, rgba(11,12,15,.05) 0%, rgba(11,12,15,.55) 55%, #0B0C0F 100%);"></div>
+          <div style="position:absolute; top:12px; right:14px; font-family:'JetBrains Mono'; font-size:9px; color:#5B636F;">[ PLAYER PHOTO ]</div>
+          <div style="position:absolute; top:16px; left:16px; display:flex; align-items:center; gap:7px; background:rgba(0,0,0,.45); border:1px solid rgba(255,255,255,.14); border-radius:20px; padding:5px 11px; backdrop-filter:blur(4px);">
+            <span style="width:7px; height:7px; border-radius:50%; background:#FF4D4D; animation:pulse 1.4s infinite;"></span>
+            <span style="font-family:'Archivo'; font-weight:800; font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:#fff;">12 slips live today</span>
+          </div>
+          <div style="position:absolute; left:0; right:0; bottom:0; padding:20px;">
+            <div style="font-family:'Archivo'; font-weight:800; font-size:11px; letter-spacing:.16em; text-transform:uppercase; color:#CCFF33; margin-bottom:9px;">Ghana &middot; Football &middot; Daily</div>
+            <h1 style="font-family:'Anton'; font-size:43px; line-height:.9; color:#F2F4F7; margin:0; text-transform:uppercase;">Ghana's #1<br>betting <span style="color:#CCFF33;">slips</span></h1>
+          </div>
+        </div>
+        <!-- stat strip -->
+        <div style="display:flex; gap:9px; padding:16px 16px 4px;">
+          <div style="flex:1; background:#14171D; border:1px solid rgba(255,255,255,.07); border-radius:14px; padding:12px 11px;">
+            <div style="font-family:'JetBrains Mono'; font-weight:800; font-size:22px; color:#CCFF33; line-height:1;">87%</div>
+            <div style="font-family:'Archivo'; font-weight:600; font-size:10px; color:#9AA3B2; margin-top:5px;">Win rate · 30d</div>
+          </div>
+          <div style="flex:1; background:#14171D; border:1px solid rgba(255,255,255,.07); border-radius:14px; padding:12px 11px;">
+            <div style="font-family:'JetBrains Mono'; font-weight:800; font-size:22px; color:#F2F4F7; line-height:1;">200+</div>
+            <div style="font-family:'Archivo'; font-weight:600; font-size:10px; color:#9AA3B2; margin-top:5px;">Slips delivered</div>
+          </div>
+          <div style="flex:1; background:#14171D; border:1px solid rgba(255,255,255,.07); border-radius:14px; padding:12px 11px;">
+            <div style="font-family:'JetBrains Mono'; font-weight:800; font-size:22px; color:#34E08A; line-height:1;">W7</div>
+            <div style="font-family:'Archivo'; font-weight:600; font-size:10px; color:#9AA3B2; margin-top:5px;">Win streak</div>
+          </div>
+        </div>
+        <!-- free pick -->
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:18px 18px 10px;">
+          <span style="font-family:'Archivo'; font-weight:800; font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:#9AA3B2;">Free pick of the day</span>
+          <span style="font-family:'Archivo'; font-weight:800; font-size:9px; letter-spacing:.08em; text-transform:uppercase; padding:3px 8px; border-radius:6px; background:rgba(139,149,163,.16); color:#B8C0CC;">Free zone</span>
+        </div>
+        <div style="margin:0 16px; background:#14171D; border:1px solid rgba(255,255,255,.07); border-radius:16px; padding:14px;">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
+            <span style="font-family:'Archivo'; font-weight:700; font-size:11px; color:#9AA3B2;">Premier League</span>
+            <span style="font-family:'JetBrains Mono'; font-size:11px; color:#5B636F;">Sun · 15:00</span>
+          </div>
+          <div style="font-family:'Archivo'; font-weight:800; font-size:19px; color:#F2F4F7; margin-bottom:12px;">Arsenal <span style="color:#5B636F;">vs</span> Aston Villa</div>
+          <div style="display:flex; align-items:flex-end; justify-content:space-between;">
+            <div>
+              <div style="font-family:'Archivo'; font-weight:700; font-size:13px; color:#CCFF33;">Over 1.5 · Yes</div>
+              <div style="font-family:'Archivo'; font-weight:500; font-size:11px; color:#9AA3B2; margin-top:2px;">Total goals</div>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-family:'JetBrains Mono'; font-weight:800; font-size:22px; color:#F2F4F7; line-height:1;">1.35</div>
+              <div style="font-family:'Archivo'; font-weight:700; font-size:8px; letter-spacing:.1em; color:#5B636F; margin-top:2px;">ODDS</div>
+            </div>
+          </div>
+        </div>
+        <!-- recent form -->
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:18px 18px 10px;">
+          <span style="font-family:'Archivo'; font-weight:800; font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:#9AA3B2;">Recent form</span>
+          <span style="font-family:'Archivo'; font-weight:700; font-size:11px; color:#CCFF33;">See proof &rarr;</span>
+        </div>
+        <div style="display:flex; gap:6px; padding:0 16px;">
+          <div style="flex:1; aspect-ratio:1; display:flex; align-items:center; justify-content:center; border-radius:9px; background:rgba(52,224,138,.14); color:#34E08A; font-family:'Archivo'; font-weight:800; font-size:13px;">W</div>
+          <div style="flex:1; aspect-ratio:1; display:flex; align-items:center; justify-content:center; border-radius:9px; background:rgba(52,224,138,.14); color:#34E08A; font-family:'Archivo'; font-weight:800; font-size:13px;">W</div>
+          <div style="flex:1; aspect-ratio:1; display:flex; align-items:center; justify-content:center; border-radius:9px; background:rgba(255,77,77,.14); color:#FF4D4D; font-family:'Archivo'; font-weight:800; font-size:13px;">L</div>
+          <div style="flex:1; aspect-ratio:1; display:flex; align-items:center; justify-content:center; border-radius:9px; background:rgba(52,224,138,.14); color:#34E08A; font-family:'Archivo'; font-weight:800; font-size:13px;">W</div>
+          <div style="flex:1; aspect-ratio:1; display:flex; align-items:center; justify-content:center; border-radius:9px; background:rgba(52,224,138,.14); color:#34E08A; font-family:'Archivo'; font-weight:800; font-size:13px;">W</div>
+          <div style="flex:1; aspect-ratio:1; display:flex; align-items:center; justify-content:center; border-radius:9px; background:rgba(52,224,138,.14); color:#34E08A; font-family:'Archivo'; font-weight:800; font-size:13px;">W</div>
+          <div style="flex:1; aspect-ratio:1; display:flex; align-items:center; justify-content:center; border-radius:9px; background:rgba(245,196,81,.16); color:#F5C451; font-family:'Archivo'; font-weight:800; font-size:11px;">··</div>
+        </div>
+        <!-- CTA -->
+        <div style="padding:20px 16px 24px;">
+          <div style="background:#CCFF33; border-radius:15px; padding:16px; display:flex; align-items:center; justify-content:center; gap:9px;">
+            <i class="ph-fill ph-crown-simple" style="font-size:19px; color:#0B0C0F;"></i>
+            <span style="font-family:'Archivo'; font-weight:800; font-size:15px; letter-spacing:.02em; color:#0B0C0F;">Unlock VIP packages</span>
+          </div>
+          <div style="text-align:center; font-family:'Archivo'; font-weight:500; font-size:11px; color:#5B636F; margin-top:12px;">18+ only · Gambling can be addictive · Play responsibly</div>
+        </div>
+      </div>
+      <!-- bottom nav -->
+      <div style="height:74px; flex-shrink:0; display:flex; align-items:center; justify-content:space-around; padding:0 8px 14px; background:rgba(11,12,15,.92); backdrop-filter:blur(12px); border-top:1px solid rgba(255,255,255,.07); z-index:20;">
+        <div style="display:flex; flex-direction:column; align-items:center; gap:4px; flex:1;"><i class="ph-fill ph-house" style="font-size:21px; color:#CCFF33;"></i><span style="font-family:'Archivo'; font-weight:800; font-size:9px; letter-spacing:.04em; text-transform:uppercase; color:#CCFF33;">Home</span></div>
+        <div style="display:flex; flex-direction:column; align-items:center; gap:4px; flex:1;"><i class="ph ph-list-checks" style="font-size:21px; color:#5B636F;"></i><span style="font-family:'Archivo'; font-weight:700; font-size:9px; letter-spacing:.04em; text-transform:uppercase; color:#5B636F;">Slips</span></div>
+        <div style="display:flex; flex-direction:column; align-items:center; gap:4px; flex:1;"><i class="ph ph-seal-check" style="font-size:21px; color:#5B636F;"></i><span style="font-family:'Archivo'; font-weight:700; font-size:9px; letter-spacing:.04em; text-transform:uppercase; color:#5B636F;">Proof</span></div>
+        <div style="display:flex; flex-direction:column; align-items:center; gap:4px; flex:1;"><i class="ph ph-crown-simple" style="font-size:21px; color:#5B636F;"></i><span style="font-family:'Archivo'; font-weight:700; font-size:9px; letter-spacing:.04em; text-transform:uppercase; color:#5B636F;">VIP</span></div>
+        <div style="display:flex; flex-direction:column; align-items:center; gap:4px; flex:1;"><i class="ph ph-chats-circle" style="font-size:21px; color:#5B636F;"></i><span style="font-family:'Archivo'; font-weight:700; font-size:9px; letter-spacing:.04em; text-transform:uppercase; color:#5B636F;">Chat</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 02 · PROOF ============ -->
+<div style="position:absolute; left:500px; top:230px; width:414px;">
+  <div data-drags-parent="1" style="font-family:'Archivo'; font-weight:800; font-size:13px; letter-spacing:.1em; text-transform:uppercase; color:#5B636F; margin-bottom:14px; cursor:grab;">02 · Proof &amp; results</div>
+  <div style="width:414px; background:#000; border-radius:52px; padding:11px; box-shadow:0 40px 90px -25px rgba(0,0,0,.55), 0 0 0 2px #1c1c1e;">
+    <div style="width:392px; height:846px; background:#0B0C0F; border-radius:42px; overflow:hidden; position:relative; display:flex; flex-direction:column; font-family:'Archivo',sans-serif;" data-screen-label="Proof">
+      <div style="position:absolute; top:11px; left:50%; transform:translateX(-50%); width:120px; height:32px; background:#000; border-radius:20px; z-index:30;"></div>
+      <div style="height:52px; flex-shrink:0; display:flex; align-items:flex-end; justify-content:space-between; padding:0 28px 7px; z-index:20;">
+        <span style="font-family:'Archivo'; font-weight:700; font-size:15px; color:#F2F4F7;">9:41</span>
+        <div style="display:flex; align-items:center; gap:7px; color:#F2F4F7; font-size:15px;"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-full"></i></div>
+      </div>
+      <div class="scr" style="flex:1; overflow-y:auto;">
+        <!-- header -->
+        <div style="padding:6px 20px 4px; display:flex; align-items:center; gap:9px;">
+          <i class="ph-fill ph-seal-check" style="font-size:22px; color:#CCFF33;"></i>
+          <h2 style="font-family:'Anton'; font-size:26px; letter-spacing:.02em; color:#F2F4F7; margin:0; text-transform:uppercase;">Proof &amp; results</h2>
+        </div>
+        <p style="font-family:'Archivo'; font-weight:500; font-size:12px; color:#9AA3B2; margin:6px 20px 0; line-height:1.45;">Every pick logged with its outcome. Win, lose, or pending — nothing hidden.</p>
+        <!-- win rate hero -->
+        <div style="margin:16px; border-radius:20px; padding:20px; background:linear-gradient(140deg,#1a2410,#14171D 60%); border:1px solid rgba(204,255,51,.22); position:relative; overflow:hidden;">
+          <div style="display:flex; align-items:flex-end; justify-content:space-between;">
+            <div>
+              <div style="font-family:'Archivo'; font-weight:800; font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:#CCFF33; margin-bottom:8px;">Verified · last 30 days</div>
+              <div style="font-family:'JetBrains Mono'; font-weight:800; font-size:60px; line-height:.82; color:#F2F4F7;">87<span style="font-size:30px; color:#CCFF33;">%</span></div>
+              <div style="font-family:'Archivo'; font-weight:600; font-size:12px; color:#9AA3B2; margin-top:8px;">52 won · 8 lost · settled slips</div>
+            </div>
+            <div style="display:flex; flex-direction:column; align-items:center; gap:4px; padding-bottom:4px;">
+              <div style="font-family:'JetBrains Mono'; font-weight:800; font-size:24px; color:#34E08A;">W7</div>
+              <div style="font-family:'Archivo'; font-weight:700; font-size:9px; letter-spacing:.08em; text-transform:uppercase; color:#5B636F;">streak</div>
+            </div>
+          </div>
+        </div>
+        <!-- filter segmented -->
+        <div style="display:flex; gap:7px; padding:0 16px 14px;">
+          <div style="padding:8px 14px; border-radius:11px; background:#CCFF33; font-family:'Archivo'; font-weight:800; font-size:12px; color:#0B0C0F;">All</div>
+          <div style="padding:8px 14px; border-radius:11px; background:#14171D; border:1px solid rgba(255,255,255,.08); font-family:'Archivo'; font-weight:700; font-size:12px; color:#9AA3B2;">Won</div>
+          <div style="padding:8px 14px; border-radius:11px; background:#14171D; border:1px solid rgba(255,255,255,.08); font-family:'Archivo'; font-weight:700; font-size:12px; color:#9AA3B2;">Lost</div>
+          <div style="padding:8px 14px; border-radius:11px; background:#14171D; border:1px solid rgba(255,255,255,.08); font-family:'Archivo'; font-weight:700; font-size:12px; color:#9AA3B2;">Pending</div>
+        </div>
+        <!-- ledger rows -->
+        <div style="padding:0 16px; display:flex; flex-direction:column; gap:9px;">
+          <!-- won -->
+          <div style="background:#14171D; border:1px solid rgba(255,255,255,.07); border-radius:14px; padding:13px; display:flex; align-items:center; gap:12px;">
+            <div style="width:38px; height:38px; border-radius:10px; background:rgba(52,224,138,.14); display:flex; align-items:center; justify-content:center; flex-shrink:0;"><i class="ph-bold ph-check" style="font-size:18px; color:#34E08A;"></i></div>
+            <div style="flex:1; min-width:0;">
+              <div style="font-family:'Archivo'; font-weight:800; font-size:13px; color:#F2F4F7;">Inter — PSG</div>
+              <div style="font-family:'Archivo'; font-weight:500; font-size:11px; color:#9AA3B2; margin-top:2px;">BTTS · Yes &middot; 11 May</div>
+            </div>
+            <div style="text-align:right; flex-shrink:0;">
+              <div style="font-family:'JetBrains Mono'; font-weight:800; font-size:14px; color:#34E08A;">WON</div>
+              <div style="font-family:'JetBrains Mono'; font-size:11px; color:#5B636F; margin-top:1px;">@1.72</div>
+            </div>
+          </div>
+          <!-- won -->
+          <div style="background:#14171D; border:1px solid rgba(255,255,255,.07); border-radius:14px; padding:13px; display:flex; align-items:center; gap:12px;">
+            <div style="width:38px; height:38px; border-radius:10px; background:rgba(52,224,138,.14); display:flex; align-items:center; justify-content:center; flex-shrink:0;"><i class="ph-bold ph-check" style="font-size:18px; color:#34E08A;"></i></div>
+            <div style="flex:1; min-width:0;">
+              <div style="font-family:'Archivo'; font-weight:800; font-size:13px; color:#F2F4F7;">Milan — Napoli</div>
+              <div style="font-family:'Archivo'; font-weight:500; font-size:11px; color:#9AA3B2; margin-top:2px;">Correct Score · 2-1 &middot; 12 May</div>
+            </div>
+            <div style="text-align:right; flex-shrink:0;">
+              <div style="font-family:'JetBrains Mono'; font-weight:800; font-size:14px; color:#34E08A;">WON</div>
+              <div style="font-family:'JetBrains Mono'; font-size:11px; color:#5B636F; margin-top:1px;">@9.00</div>
+            </div>
+          </div>
+          <!-- lost -->
+          <div style="background:#14171D; border:1px solid rgba(255,255,255,.07); border-radius:14px; padding:13px; display:flex; align-items:center; gap:12px; opacity:.78;">
+            <div style="width:38px; height:38px; border-radius:10px; background:rgba(255,77,77,.13); display:flex; align-items:center; justify-content:center; flex-shrink:0;"><i class="ph-bold ph-x" style="font-size:17px; color:#FF4D4D;"></i></div>
+            <div style="flex:1; min-width:0;">
+              <div style="font-family:'Archivo'; font-weight:800; font-size:13px; color:#F2F4F7;">Bayern — Leipzig</div>
+              <div style="font-family:'Archivo'; font-weight:500; font-size:11px; color:#9AA3B2; margin-top:2px;">Over 2.5 · Yes &middot; 10 May</div>
+            </div>
+            <div style="text-align:right; flex-shrink:0;">
+              <div style="font-family:'JetBrains Mono'; font-weight:800; font-size:14px; color:#FF4D4D;">LOST</div>
+              <div style="font-family:'JetBrains Mono'; font-size:11px; color:#5B636F; margin-top:1px;">@1.55</div>
+            </div>
+          </div>
+          <!-- pending -->
+          <div style="background:#14171D; border:1px solid rgba(245,196,81,.2); border-radius:14px; padding:13px; display:flex; align-items:center; gap:12px;">
+            <div style="width:38px; height:38px; border-radius:10px; background:rgba(245,196,81,.14); display:flex; align-items:center; justify-content:center; flex-shrink:0;"><i class="ph-bold ph-clock" style="font-size:17px; color:#F5C451;"></i></div>
+            <div style="flex:1; min-width:0;">
+              <div style="font-family:'Archivo'; font-weight:800; font-size:13px; color:#F2F4F7;">Arsenal — Aston Villa</div>
+              <div style="font-family:'Archivo'; font-weight:500; font-size:11px; color:#9AA3B2; margin-top:2px;">Over 1.5 · Yes &middot; Today 15:00</div>
+            </div>
+            <div style="text-align:right; flex-shrink:0;">
+              <div style="font-family:'JetBrains Mono'; font-weight:800; font-size:13px; color:#F5C451;">PENDING</div>
+              <div style="font-family:'JetBrains Mono'; font-size:11px; color:#5B636F; margin-top:1px;">@1.35</div>
+            </div>
+          </div>
+          <!-- won -->
+          <div style="background:#14171D; border:1px solid rgba(255,255,255,.07); border-radius:14px; padding:13px; display:flex; align-items:center; gap:12px;">
+            <div style="width:38px; height:38px; border-radius:10px; background:rgba(52,224,138,.14); display:flex; align-items:center; justify-content:center; flex-shrink:0;"><i class="ph-bold ph-check" style="font-size:18px; color:#34E08A;"></i></div>
+            <div style="flex:1; min-width:0;">
+              <div style="font-family:'Archivo'; font-weight:800; font-size:13px; color:#F2F4F7;">Real Madrid — Girona</div>
+              <div style="font-family:'Archivo'; font-weight:500; font-size:11px; color:#9AA3B2; margin-top:2px;">Home · Win &middot; 9 May</div>
+            </div>
+            <div style="text-align:right; flex-shrink:0;">
+              <div style="font-family:'JetBrains Mono'; font-weight:800; font-size:14px; color:#34E08A;">WON</div>
+              <div style="font-family:'JetBrains Mono'; font-size:11px; color:#5B636F; margin-top:1px;">@1.40</div>
+            </div>
+          </div>
+          <div style="text-align:center; padding:6px 0 22px;"><span style="font-family:'Archivo'; font-weight:700; font-size:12px; color:#CCFF33;">View full ledger &rarr;</span></div>
+        </div>
+      </div>
+      <div style="height:74px; flex-shrink:0; display:flex; align-items:center; justify-content:space-around; padding:0 8px 14px; background:rgba(11,12,15,.92); backdrop-filter:blur(12px); border-top:1px solid rgba(255,255,255,.07); z-index:20;">
+        <div style="display:flex; flex-direction:column; align-items:center; gap:4px; flex:1;"><i class="ph ph-house" style="font-size:21px; color:#5B636F;"></i><span style="font-family:'Archivo'; font-weight:700; font-size:9px; letter-spacing:.04em; text-transform:uppercase; color:#5B636F;">Home</span></div>
+        <div style="display:flex; flex-direction:column; align-items:center; gap:4px; flex:1;"><i class="ph ph-list-checks" style="font-size:21px; color:#5B636F;"></i><span style="font-family:'Archivo'; font-weight:700; font-size:9px; letter-spacing:.04em; text-transform:uppercase; color:#5B636F;">Slips</span></div>
+        <div style="display:flex; flex-direction:column; align-items:center; gap:4px; flex:1;"><i class="ph-fill ph-seal-check" style="font-size:21px; color:#CCFF33;"></i><span style="font-family:'Archivo'; font-weight:800; font-size:9px; letter-spacing:.04em; text-transform:uppercase; color:#CCFF33;">Proof</span></div>
+        <div style="display:flex; flex-direction:column; align-items:center; gap:4px; flex:1;"><i class="ph ph-crown-simple" style="font-size:21px; color:#5B636F;"></i><span style="font-family:'Archivo'; font-weight:700; font-size:9px; letter-spacing:.04em; text-transform:uppercase; color:#5B636F;">VIP</span></div>
+        <div style="display:flex; flex-direction:column; align-items:center; gap:4px; flex:1;"><i class="ph ph-chats-circle" style="font-size:21px; color:#5B636F;"></i><span style="font-family:'Archivo'; font-weight:700; font-size:9px; letter-spacing:.04em; text-transform:uppercase; color:#5B636F;">Chat</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 03 · PACKAGES ============ -->
+<div style="position:absolute; left:1000px; top:230px; width:414px;">
+  <div data-drags-parent="1" style="font-family:'Archivo'; font-weight:800; font-size:13px; letter-spacing:.1em; text-transform:uppercase; color:#5B636F; margin-bottom:14px; cursor:grab;">03 · VIP packages</div>
+  <div style="width:414px; background:#000; border-radius:52px; padding:11px; box-shadow:0 40px 90px -25px rgba(0,0,0,.55), 0 0 0 2px #1c1c1e;">
+    <div style="width:392px; height:846px; background:#0B0C0F; border-radius:42px; overflow:hidden; position:relative; display:flex; flex-direction:column; font-family:'Archivo',sans-serif;" data-screen-label="Packages">
+      <div style="position:absolute; top:11px; left:50%; transform:translateX(-50%); width:120px; height:32px; background:#000; border-radius:20px; z-index:30;"></div>
+      <div style="height:52px; flex-shrink:0; display:flex; align-items:flex-end; justify-content:space-between; padding:0 28px 7px; z-index:20;">
+        <span style="font-family:'Archivo'; font-weight:700; font-size:15px; color:#F2F4F7;">9:41</span>
+        <div style="display:flex; align-items:center; gap:7px; color:#F2F4F7; font-size:15px;"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-full"></i></div>
+      </div>
+      <div class="scr" style="flex:1; overflow-y:auto;">
+        <div style="padding:6px 20px 4px; display:flex; align-items:center; gap:9px;">
+          <i class="ph-fill ph-crown-simple" style="font-size:22px; color:#CCFF33;"></i>
+          <h2 style="font-family:'Anton'; font-size:26px; letter-spacing:.02em; color:#F2F4F7; margin:0; text-transform:uppercase;">VIP packages</h2>
+        </div>
+        <p style="font-family:'Archivo'; font-weight:500; font-size:12px; color:#9AA3B2; margin:6px 20px 14px; line-height:1.45;">Pick a tier. Unlock the board, the picks, and the members' lounge. <span style="color:#F5C451;">Demo mode — no real charge.</span></p>
+        <div style="padding:0 16px; display:flex; flex-direction:column; gap:11px;">
+          <!-- Fixed -->
+          <div style="background:#14171D; border:1px solid rgba(255,255,255,.08); border-radius:18px; padding:16px;">
+            <div style="display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:12px;">
+              <div>
+                <div style="font-family:'Archivo'; font-weight:800; font-size:9px; letter-spacing:.1em; text-transform:uppercase; color:#CCFF33; margin-bottom:5px;">Fixed</div>
+                <div style="font-family:'Archivo'; font-weight:800; font-size:17px; color:#F2F4F7;">TMT Fixed Pass</div>
+                <div style="font-family:'Archivo'; font-weight:500; font-size:11px; color:#9AA3B2; margin-top:2px;">7 days · weekly</div>
+              </div>
+              <div style="text-align:right;">
+                <div style="font-family:'JetBrains Mono'; font-weight:800; font-size:26px; color:#F2F4F7; line-height:1;">₵70</div>
+                <div style="font-family:'JetBrains Mono'; font-size:9px; color:#5B636F;">/week</div>
+              </div>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:6px; margin-bottom:14px;">
+              <div style="display:flex; align-items:center; gap:8px;"><i class="ph-bold ph-check" style="font-size:13px; color:#CCFF33;"></i><span style="font-family:'Archivo'; font-weight:500; font-size:12px; color:#C7CDD6;">Fixed-match slips</span></div>
+              <div style="display:flex; align-items:center; gap:8px;"><i class="ph-bold ph-check" style="font-size:13px; color:#CCFF33;"></i><span style="font-family:'Archivo'; font-weight:500; font-size:12px; color:#C7CDD6;">Members' lounge access</span></div>
+            </div>
+            <div style="border:1px solid rgba(255,255,255,.16); border-radius:12px; padding:12px; text-align:center; font-family:'Archivo'; font-weight:800; font-size:13px; color:#F2F4F7;">Subscribe</div>
+          </div>
+          <!-- Confirmed - popular -->
+          <div style="background:linear-gradient(150deg,#1a2410,#14171D 55%); border:1.5px solid #CCFF33; border-radius:18px; padding:16px; position:relative;">
+            <div style="position:absolute; top:-10px; left:16px; background:#CCFF33; border-radius:6px; padding:3px 9px; font-family:'Archivo'; font-weight:800; font-size:9px; letter-spacing:.08em; text-transform:uppercase; color:#0B0C0F;">Most popular</div>
+            <div style="display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:12px; margin-top:4px;">
+              <div>
+                <div style="font-family:'Archivo'; font-weight:800; font-size:9px; letter-spacing:.1em; text-transform:uppercase; color:#57D9FF; margin-bottom:5px;">Fixed + Confirmed</div>
+                <div style="font-family:'Archivo'; font-weight:800; font-size:17px; color:#F2F4F7;">TMT Pro Confirmed</div>
+                <div style="font-family:'Archivo'; font-weight:500; font-size:11px; color:#9AA3B2; margin-top:2px;">7 days · weekly</div>
+              </div>
+              <div style="text-align:right;">
+                <div style="font-family:'JetBrains Mono'; font-weight:800; font-size:26px; color:#CCFF33; line-height:1;">₵150</div>
+                <div style="font-family:'JetBrains Mono'; font-size:9px; color:#5B636F;">/week</div>
+              </div>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:6px; margin-bottom:14px;">
+              <div style="display:flex; align-items:center; gap:8px;"><i class="ph-bold ph-check" style="font-size:13px; color:#CCFF33;"></i><span style="font-family:'Archivo'; font-weight:500; font-size:12px; color:#C7CDD6;">Everything in Fixed</span></div>
+              <div style="display:flex; align-items:center; gap:8px;"><i class="ph-bold ph-check" style="font-size:13px; color:#CCFF33;"></i><span style="font-family:'Archivo'; font-weight:500; font-size:12px; color:#C7CDD6;">Confirmed daily picks</span></div>
+              <div style="display:flex; align-items:center; gap:8px;"><i class="ph-bold ph-check" style="font-size:13px; color:#CCFF33;"></i><span style="font-family:'Archivo'; font-weight:500; font-size:12px; color:#C7CDD6;">Priority lounge channels</span></div>
+            </div>
+            <div style="background:#CCFF33; border-radius:12px; padding:13px; text-align:center; font-family:'Archivo'; font-weight:800; font-size:14px; color:#0B0C0F;">Get this plan</div>
+          </div>
+          <!-- Elite -->
+          <div style="background:#14171D; border:1px solid rgba(255,255,255,.08); border-radius:18px; padding:16px;">
+            <div style="display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:12px;">
+              <div>
+                <div style="font-family:'Archivo'; font-weight:800; font-size:9px; letter-spacing:.1em; text-transform:uppercase; color:#9AA3B2; margin-bottom:5px;">All access</div>
+                <div style="font-family:'Archivo'; font-weight:800; font-size:17px; color:#F2F4F7;">TMT Elite</div>
+                <div style="font-family:'Archivo'; font-weight:500; font-size:11px; color:#9AA3B2; margin-top:2px;">30 days · monthly</div>
+              </div>
+              <div style="text-align:right;">
+                <div style="font-family:'JetBrains Mono'; font-weight:800; font-size:26px; color:#F2F4F7; line-height:1;">₵500</div>
+                <div style="font-family:'JetBrains Mono'; font-size:9px; color:#5B636F;">/month</div>
+              </div>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:6px; margin-bottom:14px;">
+              <div style="display:flex; align-items:center; gap:8px;"><i class="ph-bold ph-check" style="font-size:13px; color:#CCFF33;"></i><span style="font-family:'Archivo'; font-weight:500; font-size:12px; color:#C7CDD6;">Fixed + Confirmed, all month</span></div>
+              <div style="display:flex; align-items:center; gap:8px;"><i class="ph-bold ph-check" style="font-size:13px; color:#CCFF33;"></i><span style="font-family:'Archivo'; font-weight:500; font-size:12px; color:#C7CDD6;">Best value for regulars</span></div>
+            </div>
+            <div style="border:1px solid rgba(255,255,255,.16); border-radius:12px; padding:12px; text-align:center; font-family:'Archivo'; font-weight:800; font-size:13px; color:#F2F4F7;">Subscribe</div>
+          </div>
+          <!-- Correct score vault -->
+          <div style="background:#14171D; border:1px solid rgba(245,196,81,.3); border-radius:18px; padding:16px; margin-bottom:22px;">
+            <div style="display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:12px;">
+              <div>
+                <div style="font-family:'Archivo'; font-weight:800; font-size:9px; letter-spacing:.1em; text-transform:uppercase; color:#F5C451; margin-bottom:5px;">Correct score · premium</div>
+                <div style="font-family:'Archivo'; font-weight:800; font-size:17px; color:#F2F4F7;">Correct Score Vault</div>
+                <div style="font-family:'Archivo'; font-weight:500; font-size:11px; color:#9AA3B2; margin-top:2px;">30 days · monthly</div>
+              </div>
+              <div style="text-align:right;">
+                <div style="font-family:'JetBrains Mono'; font-weight:800; font-size:26px; color:#F5C451; line-height:1;">₵1000</div>
+                <div style="font-family:'JetBrains Mono'; font-size:9px; color:#5B636F;">/month</div>
+              </div>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:6px; margin-bottom:14px;">
+              <div style="display:flex; align-items:center; gap:8px;"><i class="ph-bold ph-check" style="font-size:13px; color:#F5C451;"></i><span style="font-family:'Archivo'; font-weight:500; font-size:12px; color:#C7CDD6;">Everything, plus correct-score vault</span></div>
+              <div style="display:flex; align-items:center; gap:8px;"><i class="ph-bold ph-check" style="font-size:13px; color:#F5C451;"></i><span style="font-family:'Archivo'; font-weight:500; font-size:12px; color:#C7CDD6;">Highest-odds picks (9.00+)</span></div>
+            </div>
+            <div style="background:#F5C451; border-radius:12px; padding:13px; text-align:center; font-family:'Archivo'; font-weight:800; font-size:14px; color:#0B0C0F;">Subscribe</div>
+          </div>
+        </div>
+      </div>
+      <div style="height:74px; flex-shrink:0; display:flex; align-items:center; justify-content:space-around; padding:0 8px 14px; background:rgba(11,12,15,.92); backdrop-filter:blur(12px); border-top:1px solid rgba(255,255,255,.07); z-index:20;">
+        <div style="display:flex; flex-direction:column; align-items:center; gap:4px; flex:1;"><i class="ph ph-house" style="font-size:21px; color:#5B636F;"></i><span style="font-family:'Archivo'; font-weight:700; font-size:9px; letter-spacing:.04em; text-transform:uppercase; color:#5B636F;">Home</span></div>
+        <div style="display:flex; flex-direction:column; align-items:center; gap:4px; flex:1;"><i class="ph ph-list-checks" style="font-size:21px; color:#5B636F;"></i><span style="font-family:'Archivo'; font-weight:700; font-size:9px; letter-spacing:.04em; text-transform:uppercase; color:#5B636F;">Slips</span></div>
+        <div style="display:flex; flex-direction:column; align-items:center; gap:4px; flex:1;"><i class="ph ph-seal-check" style="font-size:21px; color:#5B636F;"></i><span style="font-family:'Archivo'; font-weight:700; font-size:9px; letter-spacing:.04em; text-transform:uppercase; color:#5B636F;">Proof</span></div>
+        <div style="display:flex; flex-direction:column; align-items:center; gap:4px; flex:1;"><i class="ph-fill ph-crown-simple" style="font-size:21px; color:#CCFF33;"></i><span style="font-family:'Archivo'; font-weight:800; font-size:9px; letter-spacing:.04em; text-transform:uppercase; color:#CCFF33;">VIP</span></div>
+        <div style="display:flex; flex-direction:column; align-items:center; gap:4px; flex:1;"><i class="ph ph-chats-circle" style="font-size:21px; color:#5B636F;"></i><span style="font-family:'Archivo'; font-weight:700; font-size:9px; letter-spacing:.04em; text-transform:uppercase; color:#5B636F;">Chat</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 04 · SLIP BOARD ============ -->
+<div style="position:absolute; left:1500px; top:230px; width:414px;">
+  <div data-drags-parent="1" style="font-family:'Archivo'; font-weight:800; font-size:13px; letter-spacing:.1em; text-transform:uppercase; color:#5B636F; margin-bottom:14px; cursor:grab;">04 · Slip board</div>
+  <div style="width:414px; background:#000; border-radius:52px; padding:11px; box-shadow:0 40px 90px -25px rgba(0,0,0,.55), 0 0 0 2px #1c1c1e;">
+    <div style="width:392px; height:846px; background:#0B0C0F; border-radius:42px; overflow:hidden; position:relative; display:flex; flex-direction:column; font-family:'Archivo',sans-serif;" data-screen-label="Slip board">
+      <div style="position:absolute; top:11px; left:50%; transform:translateX(-50%); width:120px; height:32px; background:#000; border-radius:20px; z-index:30;"></div>
+      <div style="height:52px; flex-shrink:0; display:flex; align-items:flex-end; justify-content:space-between; padding:0 28px 7px; z-index:20;">
+        <span style="font-family:'Archivo'; font-weight:700; font-size:15px; color:#F2F4F7;">9:41</span>
+        <div style="display:flex; align-items:center; gap:7px; color:#F2F4F7; font-size:15px;"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-full"></i></div>
+      </div>
+      <div class="scr" style="flex:1; overflow-y:auto;">
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:6px 20px 2px;">
+          <h2 style="font-family:'Anton'; font-size:26px; letter-spacing:.02em; color:#F2F4F7; margin:0; text-transform:uppercase;">Today's board</h2>
+          <div style="display:flex; align-items:center; gap:6px; background:rgba(255,77,77,.13); border-radius:20px; padding:5px 10px;"><span style="width:6px; height:6px; border-radius:50%; background:#FF4D4D; animation:pulse 1.4s infinite;"></span><span style="font-family:'Archivo'; font-weight:800; font-size:10px; color:#FF4D4D;">LIVE</span></div>
+        </div>
+        <p style="font-family:'Archivo'; font-weight:500; font-size:12px; color:#9AA3B2; margin:6px 20px 0;">Each row mirrors a sportsbook line: fixture, market, odds.</p>
+        <!-- league chips -->
+        <div class="scr" style="display:flex; gap:7px; padding:14px 16px; overflow-x:auto;">
+          <div style="flex-shrink:0; padding:7px 13px; border-radius:10px; background:#CCFF33; font-family:'Archivo'; font-weight:800; font-size:12px; color:#0B0C0F;">All</div>
+          <div style="flex-shrink:0; padding:7px 13px; border-radius:10px; background:#14171D; border:1px solid rgba(255,255,255,.08); font-family:'Archivo'; font-weight:700; font-size:12px; color:#9AA3B2;">Premier League</div>
+          <div style="flex-shrink:0; padding:7px 13px; border-radius:10px; background:#14171D; border:1px solid rgba(255,255,255,.08); font-family:'Archivo'; font-weight:700; font-size:12px; color:#9AA3B2;">UCL</div>
+          <div style="flex-shrink:0; padding:7px 13px; border-radius:10px; background:#14171D; border:1px solid rgba(255,255,255,.08); font-family:'Archivo'; font-weight:700; font-size:12px; color:#9AA3B2;">LaLiga</div>
+        </div>
+        <div style="padding:0 16px; display:flex; flex-direction:column; gap:10px;">
+          <!-- free -->
+          <div style="background:#14171D; border:1px solid rgba(255,255,255,.07); border-radius:16px; padding:14px;">
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:9px;">
+              <span style="font-family:'Archivo'; font-weight:700; font-size:11px; color:#9AA3B2;">Premier League · Sun 15:00</span>
+              <span style="font-family:'Archivo'; font-weight:800; font-size:9px; letter-spacing:.06em; text-transform:uppercase; padding:3px 8px; border-radius:6px; background:rgba(139,149,163,.16); color:#B8C0CC;">Free</span>
+            </div>
+            <div style="font-family:'Archivo'; font-weight:800; font-size:17px; color:#F2F4F7; margin-bottom:11px;">Arsenal <span style="color:#5B636F;">vs</span> Aston Villa</div>
+            <div style="display:flex; align-items:flex-end; justify-content:space-between;">
+              <div><div style="font-family:'Archivo'; font-weight:700; font-size:13px; color:#CCFF33;">Over 1.5 · Yes</div><div style="font-family:'Archivo'; font-weight:500; font-size:11px; color:#9AA3B2; margin-top:2px;">Total goals</div></div>
+              <div style="display:flex; align-items:center; gap:10px;"><div style="text-align:right;"><div style="font-family:'JetBrains Mono'; font-weight:800; font-size:20px; color:#F2F4F7; line-height:1;">1.35</div></div><div style="width:36px; height:36px; border-radius:10px; background:#CCFF33; display:flex; align-items:center; justify-content:center;"><i class="ph-bold ph-plus" style="font-size:17px; color:#0B0C0F;"></i></div></div>
+            </div>
+          </div>
+          <!-- confirmed -->
+          <div style="background:#14171D; border:1px solid rgba(87,217,255,.22); border-radius:16px; padding:14px;">
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:9px;">
+              <span style="font-family:'Archivo'; font-weight:700; font-size:11px; color:#9AA3B2;">UCL · Mon 19:00</span>
+              <span style="font-family:'Archivo'; font-weight:800; font-size:9px; letter-spacing:.06em; text-transform:uppercase; padding:3px 8px; border-radius:6px; background:rgba(87,217,255,.14); color:#57D9FF;">Confirmed</span>
+            </div>
+            <div style="font-family:'Archivo'; font-weight:800; font-size:17px; color:#F2F4F7; margin-bottom:11px;">Inter <span style="color:#5B636F;">vs</span> PSG</div>
+            <div style="display:flex; align-items:flex-end; justify-content:space-between;">
+              <div><div style="font-family:'Archivo'; font-weight:700; font-size:13px; color:#57D9FF;">BTTS · Yes</div><div style="font-family:'Archivo'; font-weight:500; font-size:11px; color:#9AA3B2; margin-top:2px;">Both teams to score</div></div>
+              <div style="display:flex; align-items:center; gap:10px;"><div style="text-align:right;"><div style="font-family:'JetBrains Mono'; font-weight:800; font-size:20px; color:#F2F4F7; line-height:1;">1.72</div></div><div style="width:36px; height:36px; border-radius:10px; background:#CCFF33; display:flex; align-items:center; justify-content:center;"><i class="ph-bold ph-plus" style="font-size:17px; color:#0B0C0F;"></i></div></div>
+            </div>
+          </div>
+          <!-- locked correct score -->
+          <div style="background:#14171D; border:1px solid rgba(245,196,81,.28); border-radius:16px; padding:14px; position:relative; overflow:hidden;">
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:9px;">
+              <span style="font-family:'Archivo'; font-weight:700; font-size:11px; color:#9AA3B2;">Serie A · Tue 17:45</span>
+              <span style="font-family:'Archivo'; font-weight:800; font-size:9px; letter-spacing:.06em; text-transform:uppercase; padding:3px 8px; border-radius:6px; background:rgba(245,196,81,.14); color:#F5C451;">Correct score</span>
+            </div>
+            <div style="font-family:'Archivo'; font-weight:800; font-size:17px; color:#F2F4F7; margin-bottom:11px;">Milan <span style="color:#5B636F;">vs</span> Napoli</div>
+            <div style="display:flex; align-items:flex-end; justify-content:space-between;">
+              <div style="display:flex; align-items:center; gap:8px;"><i class="ph-fill ph-lock-simple" style="font-size:15px; color:#F5C451;"></i><div><div style="font-family:'JetBrains Mono'; font-weight:800; font-size:14px; color:#5B636F; letter-spacing:.15em;">•&#8202;–&#8202;•</div><div style="font-family:'Archivo'; font-weight:600; font-size:11px; color:#9AA3B2; margin-top:2px;">Unlock to view pick</div></div></div>
+              <div style="background:#F5C451; border-radius:10px; padding:9px 13px; font-family:'Archivo'; font-weight:800; font-size:12px; color:#0B0C0F;">Unlock</div>
+            </div>
+          </div>
+          <!-- confirmed 2 -->
+          <div style="background:#14171D; border:1px solid rgba(255,255,255,.07); border-radius:16px; padding:14px; margin-bottom:8px;">
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:9px;">
+              <span style="font-family:'Archivo'; font-weight:700; font-size:11px; color:#9AA3B2;">LaLiga · Wed 20:00</span>
+              <span style="font-family:'Archivo'; font-weight:800; font-size:9px; letter-spacing:.06em; text-transform:uppercase; padding:3px 8px; border-radius:6px; background:rgba(87,217,255,.14); color:#57D9FF;">Confirmed</span>
+            </div>
+            <div style="font-family:'Archivo'; font-weight:800; font-size:17px; color:#F2F4F7; margin-bottom:11px;">Barcelona <span style="color:#5B636F;">vs</span> Sevilla</div>
+            <div style="display:flex; align-items:flex-end; justify-content:space-between;">
+              <div><div style="font-family:'Archivo'; font-weight:700; font-size:13px; color:#57D9FF;">Home · Win</div><div style="font-family:'Archivo'; font-weight:500; font-size:11px; color:#9AA3B2; margin-top:2px;">Match result</div></div>
+              <div style="display:flex; align-items:center; gap:10px;"><div style="text-align:right;"><div style="font-family:'JetBrains Mono'; font-weight:800; font-size:20px; color:#F2F4F7; line-height:1;">1.45</div></div><div style="width:36px; height:36px; border-radius:10px; background:#CCFF33; display:flex; align-items:center; justify-content:center;"><i class="ph-bold ph-plus" style="font-size:17px; color:#0B0C0F;"></i></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- betslip bar -->
+      <div style="flex-shrink:0; margin:0 14px 6px; background:#CCFF33; border-radius:15px; padding:12px 16px; display:flex; align-items:center; justify-content:space-between;">
+        <div style="display:flex; align-items:center; gap:9px;"><div style="width:24px; height:24px; border-radius:7px; background:#0B0C0F; display:flex; align-items:center; justify-content:center; font-family:'JetBrains Mono'; font-weight:800; font-size:12px; color:#CCFF33;">2</div><span style="font-family:'Archivo'; font-weight:800; font-size:13px; color:#0B0C0F;">In your slip</span></div>
+        <div style="display:flex; align-items:center; gap:8px;"><span style="font-family:'JetBrains Mono'; font-weight:800; font-size:15px; color:#0B0C0F;">2.32</span><i class="ph-bold ph-arrow-right" style="font-size:15px; color:#0B0C0F;"></i></div>
+      </div>
+      <div style="height:74px; flex-shrink:0; display:flex; align-items:center; justify-content:space-around; padding:0 8px 14px; background:rgba(11,12,15,.92); backdrop-filter:blur(12px); border-top:1px solid rgba(255,255,255,.07); z-index:20;">
+        <div style="display:flex; flex-direction:column; align-items:center; gap:4px; flex:1;"><i class="ph ph-house" style="font-size:21px; color:#5B636F;"></i><span style="font-family:'Archivo'; font-weight:700; font-size:9px; letter-spacing:.04em; text-transform:uppercase; color:#5B636F;">Home</span></div>
+        <div style="display:flex; flex-direction:column; align-items:center; gap:4px; flex:1;"><i class="ph-fill ph-list-checks" style="font-size:21px; color:#CCFF33;"></i><span style="font-family:'Archivo'; font-weight:800; font-size:9px; letter-spacing:.04em; text-transform:uppercase; color:#CCFF33;">Slips</span></div>
+        <div style="display:flex; flex-direction:column; align-items:center; gap:4px; flex:1;"><i class="ph ph-seal-check" style="font-size:21px; color:#5B636F;"></i><span style="font-family:'Archivo'; font-weight:700; font-size:9px; letter-spacing:.04em; text-transform:uppercase; color:#5B636F;">Proof</span></div>
+        <div style="display:flex; flex-direction:column; align-items:center; gap:4px; flex:1;"><i class="ph ph-crown-simple" style="font-size:21px; color:#5B636F;"></i><span style="font-family:'Archivo'; font-weight:700; font-size:9px; letter-spacing:.04em; text-transform:uppercase; color:#5B636F;">VIP</span></div>
+        <div style="display:flex; flex-direction:column; align-items:center; gap:4px; flex:1;"><i class="ph ph-chats-circle" style="font-size:21px; color:#5B636F;"></i><span style="font-family:'Archivo'; font-weight:700; font-size:9px; letter-spacing:.04em; text-transform:uppercase; color:#5B636F;">Chat</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 05 · COMMUNITY ============ -->
+<div style="position:absolute; left:2000px; top:230px; width:414px;">
+  <div data-drags-parent="1" style="font-family:'Archivo'; font-weight:800; font-size:13px; letter-spacing:.1em; text-transform:uppercase; color:#5B636F; margin-bottom:14px; cursor:grab;">05 · Members' lounge</div>
+  <div style="width:414px; background:#000; border-radius:52px; padding:11px; box-shadow:0 40px 90px -25px rgba(0,0,0,.55), 0 0 0 2px #1c1c1e;">
+    <div style="width:392px; height:846px; background:#0B0C0F; border-radius:42px; overflow:hidden; position:relative; display:flex; flex-direction:column; font-family:'Archivo',sans-serif;" data-screen-label="Community">
+      <div style="position:absolute; top:11px; left:50%; transform:translateX(-50%); width:120px; height:32px; background:#000; border-radius:20px; z-index:30;"></div>
+      <div style="height:52px; flex-shrink:0; display:flex; align-items:flex-end; justify-content:space-between; padding:0 28px 7px; z-index:20;">
+        <span style="font-family:'Archivo'; font-weight:700; font-size:15px; color:#F2F4F7;">9:41</span>
+        <div style="display:flex; align-items:center; gap:7px; color:#F2F4F7; font-size:15px;"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-full"></i></div>
+      </div>
+      <!-- lounge header -->
+      <div style="flex-shrink:0; padding:6px 18px 12px; border-bottom:1px solid rgba(255,255,255,.07);">
+        <div style="display:flex; align-items:center; justify-content:space-between;">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <div style="width:34px; height:34px; border-radius:10px; background:#CCFF33; display:flex; align-items:center; justify-content:center;"><i class="ph-fill ph-lightning" style="font-size:18px; color:#0B0C0F;"></i></div>
+            <div><div style="font-family:'Anton'; font-size:18px; color:#F2F4F7; letter-spacing:.02em;">TMT VIP LOUNGE</div><div style="display:flex; align-items:center; gap:6px; margin-top:1px;"><span style="width:6px; height:6px; border-radius:50%; background:#34E08A;"></span><span style="font-family:'Archivo'; font-weight:600; font-size:11px; color:#9AA3B2;">214 online</span></div></div>
+          </div>
+          <i class="ph ph-users-three" style="font-size:23px; color:#9AA3B2;"></i>
+        </div>
+        <!-- channel pills -->
+        <div class="scr" style="display:flex; gap:7px; margin-top:13px; overflow-x:auto;">
+          <div style="flex-shrink:0; display:flex; align-items:center; gap:5px; padding:6px 11px; border-radius:9px; background:#CCFF33; font-family:'Archivo'; font-weight:800; font-size:11px; color:#0B0C0F;"><i class="ph-bold ph-hash" style="font-size:11px;"></i>fixed-vip</div>
+          <div style="flex-shrink:0; display:flex; align-items:center; gap:5px; padding:6px 11px; border-radius:9px; background:#14171D; border:1px solid rgba(255,255,255,.08); font-family:'Archivo'; font-weight:700; font-size:11px; color:#9AA3B2;"><i class="ph ph-megaphone-simple" style="font-size:11px;"></i>announcements</div>
+          <div style="flex-shrink:0; display:flex; align-items:center; gap:5px; padding:6px 11px; border-radius:9px; background:#14171D; border:1px solid rgba(255,255,255,.08); font-family:'Archivo'; font-weight:700; font-size:11px; color:#9AA3B2;"><i class="ph ph-hash" style="font-size:11px;"></i>general</div>
+          <div style="flex-shrink:0; display:flex; align-items:center; gap:5px; padding:6px 11px; border-radius:9px; background:#14171D; border:1px solid rgba(255,255,255,.08); font-family:'Archivo'; font-weight:700; font-size:11px; color:#5B636F;"><i class="ph-fill ph-lock-simple" style="font-size:11px; color:#F5C451;"></i>correct-score</div>
+        </div>
+      </div>
+      <!-- chat scroll -->
+      <div class="scr" style="flex:1; overflow-y:auto; padding:14px 16px;">
+        <!-- admin pinned -->
+        <div style="background:rgba(204,255,51,.07); border:1px solid rgba(204,255,51,.22); border-radius:13px; padding:11px 13px; margin-bottom:16px; display:flex; gap:9px;">
+          <i class="ph-fill ph-push-pin" style="font-size:14px; color:#CCFF33; margin-top:1px;"></i>
+          <div><div style="font-family:'Archivo'; font-weight:800; font-size:11px; color:#CCFF33; margin-bottom:3px;">Pinned by admin</div><div style="font-family:'Archivo'; font-weight:500; font-size:12px; color:#C7CDD6; line-height:1.45;">Today's fixed slip drops at 12:00 GMT. Stake responsibly — 1-2 units max.</div></div>
+        </div>
+        <!-- msg admin -->
+        <div style="display:flex; gap:10px; margin-bottom:16px;">
+          <div style="width:36px; height:36px; border-radius:11px; background:#CCFF33; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-family:'Archivo'; font-weight:800; font-size:14px; color:#0B0C0F;">T</div>
+          <div style="flex:1; min-width:0;">
+            <div style="display:flex; align-items:center; gap:7px; margin-bottom:4px;"><span style="font-family:'Archivo'; font-weight:800; font-size:13px; color:#F2F4F7;">TMT Admin</span><span style="font-family:'Archivo'; font-weight:800; font-size:8px; letter-spacing:.06em; text-transform:uppercase; padding:2px 6px; border-radius:5px; background:#CCFF33; color:#0B0C0F;">Admin</span><span style="font-family:'JetBrains Mono'; font-size:10px; color:#5B636F;">11:58</span></div>
+            <div style="font-family:'Archivo'; font-weight:500; font-size:13px; color:#C7CDD6; line-height:1.45;">Fixed slip is in 🔒 Here's today's confirmed line — full board on the Slips tab.</div>
+            <!-- embedded slip -->
+            <div style="margin-top:9px; background:#14171D; border:1px solid rgba(87,217,255,.22); border-radius:12px; padding:11px;">
+              <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;"><span style="font-family:'Archivo'; font-weight:700; font-size:10px; color:#9AA3B2;">UCL · Mon 19:00</span><span style="font-family:'Archivo'; font-weight:800; font-size:8px; letter-spacing:.06em; text-transform:uppercase; padding:2px 6px; border-radius:5px; background:rgba(87,217,255,.14); color:#57D9FF;">Confirmed</span></div>
+              <div style="font-family:'Archivo'; font-weight:800; font-size:14px; color:#F2F4F7; margin-bottom:7px;">Inter vs PSG</div>
+              <div style="display:flex; align-items:center; justify-content:space-between;"><span style="font-family:'Archivo'; font-weight:700; font-size:12px; color:#57D9FF;">BTTS · Yes</span><span style="font-family:'JetBrains Mono'; font-weight:800; font-size:16px; color:#F2F4F7;">1.72</span></div>
+            </div>
+          </div>
+        </div>
+        <!-- msg member -->
+        <div style="display:flex; gap:10px; margin-bottom:16px;">
+          <div style="width:36px; height:36px; border-radius:11px; background:#1f2937; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-family:'Archivo'; font-weight:800; font-size:14px; color:#57D9FF;">K</div>
+          <div style="flex:1; min-width:0;">
+            <div style="display:flex; align-items:center; gap:7px; margin-bottom:4px;"><span style="font-family:'Archivo'; font-weight:800; font-size:13px; color:#F2F4F7;">Kwame_GH</span><span style="font-family:'JetBrains Mono'; font-size:10px; color:#5B636F;">12:01</span></div>
+            <div style="font-family:'Archivo'; font-weight:500; font-size:13px; color:#C7CDD6; line-height:1.45;">Bagged the Inter line last week 🙌 staying disciplined this time</div>
+          </div>
+        </div>
+        <!-- msg member 2 -->
+        <div style="display:flex; gap:10px; margin-bottom:16px;">
+          <div style="width:36px; height:36px; border-radius:11px; background:#1f2937; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-family:'Archivo'; font-weight:800; font-size:14px; color:#F5C451;">A</div>
+          <div style="flex:1; min-width:0;">
+            <div style="display:flex; align-items:center; gap:7px; margin-bottom:4px;"><span style="font-family:'Archivo'; font-weight:800; font-size:13px; color:#F2F4F7;">Ama_Accra</span><span style="font-family:'JetBrains Mono'; font-size:10px; color:#5B636F;">12:03</span></div>
+            <div style="font-family:'Archivo'; font-weight:500; font-size:13px; color:#C7CDD6; line-height:1.45;">Is correct-score channel unlocking for Elite this week?</div>
+          </div>
+        </div>
+        <!-- admin note -->
+        <div style="display:flex; align-items:center; gap:8px; justify-content:center; margin:6px 0;"><div style="flex:1; height:1px; background:rgba(255,255,255,.07);"></div><span style="font-family:'Archivo'; font-weight:600; font-size:10px; color:#5B636F;">Admin created #correct-score · 12:04</span><div style="flex:1; height:1px; background:rgba(255,255,255,.07);"></div></div>
+      </div>
+      <!-- composer -->
+      <div style="flex-shrink:0; padding:8px 14px 10px; border-top:1px solid rgba(255,255,255,.07);">
+        <div style="display:flex; align-items:center; gap:9px; background:#14171D; border:1px solid rgba(255,255,255,.1); border-radius:14px; padding:10px 14px;">
+          <i class="ph ph-plus-circle" style="font-size:21px; color:#5B636F;"></i>
+          <span style="flex:1; font-family:'Archivo'; font-weight:500; font-size:13px; color:#5B636F;">Message #fixed-vip</span>
+          <div style="width:30px; height:30px; border-radius:9px; background:#CCFF33; display:flex; align-items:center; justify-content:center;"><i class="ph-fill ph-paper-plane-right" style="font-size:15px; color:#0B0C0F;"></i></div>
+        </div>
+      </div>
+      <div style="height:74px; flex-shrink:0; display:flex; align-items:center; justify-content:space-around; padding:0 8px 14px; background:rgba(11,12,15,.92); backdrop-filter:blur(12px); border-top:1px solid rgba(255,255,255,.07); z-index:20;">
+        <div style="display:flex; flex-direction:column; align-items:center; gap:4px; flex:1;"><i class="ph ph-house" style="font-size:21px; color:#5B636F;"></i><span style="font-family:'Archivo'; font-weight:700; font-size:9px; letter-spacing:.04em; text-transform:uppercase; color:#5B636F;">Home</span></div>
+        <div style="display:flex; flex-direction:column; align-items:center; gap:4px; flex:1;"><i class="ph ph-list-checks" style="font-size:21px; color:#5B636F;"></i><span style="font-family:'Archivo'; font-weight:700; font-size:9px; letter-spacing:.04em; text-transform:uppercase; color:#5B636F;">Slips</span></div>
+        <div style="display:flex; flex-direction:column; align-items:center; gap:4px; flex:1;"><i class="ph ph-seal-check" style="font-size:21px; color:#5B636F;"></i><span style="font-family:'Archivo'; font-weight:700; font-size:9px; letter-spacing:.04em; text-transform:uppercase; color:#5B636F;">Proof</span></div>
+        <div style="display:flex; flex-direction:column; align-items:center; gap:4px; flex:1;"><i class="ph ph-crown-simple" style="font-size:21px; color:#5B636F;"></i><span style="font-family:'Archivo'; font-weight:700; font-size:9px; letter-spacing:.04em; text-transform:uppercase; color:#5B636F;">VIP</span></div>
+        <div style="display:flex; flex-direction:column; align-items:center; gap:4px; flex:1;"><i class="ph-fill ph-chats-circle" style="font-size:21px; color:#CCFF33;"></i><span style="font-family:'Archivo'; font-weight:800; font-size:9px; letter-spacing:.04em; text-transform:uppercase; color:#CCFF33;">Chat</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>
