@@ -21,7 +21,10 @@ import {
   PlusCircle,
   Send,
   Users,
+  LogIn,
+  LogOut,
 } from "lucide-react";
+import { useApp } from "./store/AppProvider";
 
 type Tab = "home" | "slips" | "proof" | "vip" | "chat";
 
@@ -32,6 +35,51 @@ const NAV_ITEMS: { id: Tab; label: string; icon: React.ElementType; activeIcon: 
   { id: "vip", label: "VIP", icon: Crown, activeIcon: Crown },
   { id: "chat", label: "Chat", icon: MessageCircle, activeIcon: MessageCircle },
 ];
+
+function AuthModal({ onClose }: { onClose: () => void }) {
+  const { login, register } = useApp();
+  const [isRegister, setIsRegister] = useState(false);
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+
+  const submit = () => {
+    setError("");
+    if (isRegister) {
+      if (!name || !email || !password) { setError("All fields are required"); return; }
+      const ok = register(name, email, password);
+      if (!ok) setError("Email already exists");
+      else onClose();
+    } else {
+      if (!email || !password) { setError("Email and password required"); return; }
+      const ok = login(email, password);
+      if (!ok) setError("Invalid credentials");
+      else onClose();
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm">
+      <div className="w-full max-w-md bg-bg-secondary border border-border-subtle rounded-t-[24px] sm:rounded-[24px] p-5 animate-[slideUp_200ms_ease]">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-archivo font-extrabold text-[18px] text-text-primary">{isRegister ? "Create account" : "Welcome back"}</h3>
+          <button onClick={onClose} className="text-text-muted text-xs">Close</button>
+        </div>
+        {isRegister && (
+          <input className="w-full bg-bg-primary border border-border-subtle rounded-[12px] px-4 py-3 font-archivo text-[13px] text-text-primary mb-3 outline-none focus:border-accent-lime" placeholder="Full name" value={name} onChange={e => setName(e.target.value)} />
+        )}
+        <input className="w-full bg-bg-primary border border-border-subtle rounded-[12px] px-4 py-3 font-archivo text-[13px] text-text-primary mb-3 outline-none focus:border-accent-lime" placeholder="Email" type="email" value={email} onChange={e => setEmail(e.target.value)} />
+        <input className="w-full bg-bg-primary border border-border-subtle rounded-[12px] px-4 py-3 font-archivo text-[13px] text-text-primary mb-3 outline-none focus:border-accent-lime" placeholder="Password" type="password" value={password} onChange={e => setPassword(e.target.value)} />
+        {error && <p className="text-accent-red text-[11px] font-archivo mb-2">{error}</p>}
+        <button onClick={submit} className="w-full bg-accent-lime text-bg-primary font-archivo font-extrabold text-[14px] rounded-[14px] py-3">{isRegister ? "Sign up" : "Log in"}</button>
+        <p className="text-center font-archivo font-medium text-[11px] text-text-muted mt-3">
+          {isRegister ? "Already have an account?" : "New here?"} <button onClick={() => setIsRegister(!isRegister)} className="text-accent-lime">{isRegister ? "Log in" : "Create one"}</button>
+        </p>
+      </div>
+    </div>
+  );
+}
 
 function StatCard({ value, label, color }: { value: string; label: string; color: string }) {
   return (
@@ -67,6 +115,7 @@ function TierCard({
   ctaStyle,
   borderColor,
   gradient,
+  onClick,
 }: {
   title: string;
   subtitle: string;
@@ -79,10 +128,12 @@ function TierCard({
   ctaStyle: string;
   borderColor?: string;
   gradient?: string;
+  onClick?: () => void;
 }) {
   return (
     <div
-      className={`rounded-[18px] p-4 ${gradient || "bg-bg-secondary"} ${borderColor ? `border ${borderColor}` : "border border-border-subtle"}`}
+      onClick={onClick}
+      className={`relative rounded-[18px] p-4 ${gradient || "bg-bg-secondary"} ${borderColor ? `border ${borderColor}` : "border border-border-subtle"} ${onClick ? "cursor-pointer" : ""}`}
     >
       {tag && (
         <div className={`absolute -top-2.5 left-4 rounded-[6px] px-2 py-0.5 font-archivo font-extrabold text-[9px] tracking-wider uppercase ${tagColor}`}>
@@ -196,6 +247,8 @@ function PickCard({
   tag,
   tagStyle,
   locked,
+  addedToSlip,
+  onToggle,
 }: {
   league: string;
   time: string;
@@ -205,6 +258,8 @@ function PickCard({
   tag: string;
   tagStyle: string;
   locked?: boolean;
+  addedToSlip?: boolean;
+  onToggle?: () => void;
 }) {
   return (
     <div className={`rounded-[16px] p-4 ${locked ? "bg-bg-secondary border border-border-gold" : "bg-bg-secondary border border-border-subtle"}`}>
@@ -224,9 +279,12 @@ function PickCard({
               <div className="text-right">
                 <div className="font-mono font-extrabold text-[20px] leading-none text-text-primary">{odds}</div>
               </div>
-              <div className="w-9 h-9 rounded-[10px] bg-accent-lime flex items-center justify-center">
-                <Plus size={17} className="text-bg-primary" />
-              </div>
+              <button
+                onClick={onToggle}
+                className={`w-9 h-9 rounded-[10px] flex items-center justify-center ${addedToSlip ? "bg-accent-gold text-bg-primary" : "bg-accent-lime text-bg-primary"}`}
+              >
+                {addedToSlip ? <Check size={17} /> : <Plus size={17} />}
+              </button>
             </>
           ) : (
             <div className="flex items-center gap-2">
@@ -244,10 +302,16 @@ function PickCard({
 }
 
 export default function AppShell() {
-  const [tab, setTab] = useState<Tab>("home");
+  const { tab, setTab, picks, toggleSlip, slipItems, user, logout } = useApp();
+  const [showAuth, setShowAuth] = useState(false);
+
+  const slipTotalOdds = slipItems.reduce((acc, item) => acc * item.odds, 1);
+  const leagues = ["All", "Premier League", "UCL", "LaLiga", "Serie A"];
 
   return (
     <div className="phone-shell flex flex-col">
+      {showAuth && <AuthModal onClose={() => setShowAuth(false)} />}
+
       {/* Status bar */}
       <div className="h-[52px] flex-shrink-0 flex items-end justify-between px-7 pb-1.5 z-20 bg-bg-primary">
         <span className="font-archivo font-bold text-[15px] text-text-primary">9:41</span>
@@ -270,7 +334,14 @@ export default function AppShell() {
                 <span className="font-anton text-[20px] tracking-wider text-text-primary uppercase">TMTODDS</span>
               </div>
               <div className="flex items-center gap-3">
-                <span className="font-mono text-[10px] font-bold text-text-secondary border border-white/16 rounded-[20px] px-2 py-0.5">18+</span>
+                {user ? (
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-[10px] font-bold text-text-secondary border border-white/16 rounded-[20px] px-2 py-0.5">{user.name}</span>
+                    <button onClick={logout} className="text-text-secondary"><LogOut size={18} /></button>
+                  </div>
+                ) : (
+                  <button onClick={() => setShowAuth(true)} className="flex items-center gap-1 text-accent-lime"><LogIn size={20} /></button>
+                )}
                 <UserCircle size={27} className="text-text-secondary" />
               </div>
             </div>
@@ -376,60 +447,10 @@ export default function AppShell() {
               Each row mirrors a sportsbook line: fixture, market, odds.
             </p>
 
-            {/* League chips */}
-            <div className="flex gap-2 px-4 overflow-x-auto scrollbar-hide mb-4">
-              {["All", "Premier League", "UCL", "LaLiga"].map((l) => (
-                <div
-                  key={l}
-                  className={`flex-shrink-0 px-3.5 py-2 rounded-[10px] font-archivo font-extrabold text-[12px] ${
-                    l === "All"
-                      ? "bg-accent-lime text-bg-primary"
-                      : "bg-bg-secondary border border-border-subtle text-text-secondary"
-                  }`}
-                >
-                  {l}
-                </div>
-              ))}
-            </div>
-
             <div className="px-4 flex flex-col gap-2.5">
-              <PickCard
-                league="Premier League"
-                time="Sun 15:00"
-                fixture="Arsenal vs Aston Villa"
-                market="Over 1.5 · Yes"
-                odds="1.35"
-                tag="Free"
-                tagStyle="bg-white/8 text-[#B8C0CC]"
-              />
-              <PickCard
-                league="UCL"
-                time="Mon 19:00"
-                fixture="Inter vs PSG"
-                market="BTTS · Yes"
-                odds="1.72"
-                tag="Confirmed"
-                tagStyle="bg-[rgba(87,217,255,0.14)] text-accent-cyan"
-              />
-              <PickCard
-                league="Serie A"
-                time="Tue 17:45"
-                fixture="Milan vs Napoli"
-                market="Correct Score Vault"
-                odds="••"
-                tag="Correct score"
-                tagStyle="bg-[rgba(245,196,81,0.14)] text-accent-gold"
-                locked
-              />
-              <PickCard
-                league="LaLiga"
-                time="Wed 20:00"
-                fixture="Barcelona vs Sevilla"
-                market="Home · Win"
-                odds="1.45"
-                tag="Confirmed"
-                tagStyle="bg-[rgba(87,217,255,0.14)] text-accent-cyan"
-              />
+              {picks.map((p) => (
+                <PickCard key={p.id} {...p} onToggle={() => toggleSlip(p.id)} />
+              ))}
             </div>
           </div>
         )}
@@ -466,24 +487,8 @@ export default function AppShell() {
               </div>
             </div>
 
-            {/* Filters */}
-            <div className="flex gap-1.5 px-4 py-3">
-              {["All", "Won", "Lost", "Pending"].map((f) => (
-                <div
-                  key={f}
-                  className={`px-3 py-2 rounded-[11px] font-archivo font-extrabold text-[12px] ${
-                    f === "All"
-                      ? "bg-accent-lime text-bg-primary"
-                      : "bg-bg-secondary border border-border-subtle text-text-secondary"
-                  }`}
-                >
-                  {f}
-                </div>
-              ))}
-            </div>
-
             {/* Ledger */}
-            <div className="px-4 flex flex-col gap-2">
+            <div className="px-4 flex flex-col gap-2 pt-3">
               <LedgerRow match="Inter — PSG" market="BTTS · Yes · 11 May" date="" status="WON" odds="1.72" statusColor="text-accent-green" />
               <LedgerRow match="Milan — Napoli" market="Correct Score · 2-1 · 12 May" date="" status="WON" odds="9.00" statusColor="text-accent-green" />
               <LedgerRow match="Bayern — Leipzig" market="Over 2.5 · Yes · 10 May" date="" status="LOST" odds="1.55" statusColor="text-accent-red" />
@@ -688,12 +693,12 @@ export default function AppShell() {
         <div className="flex-shrink-0 mx-4 mb-2 bg-accent-lime rounded-[15px] p-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-6 h-6 rounded-[7px] bg-bg-primary flex items-center justify-center font-mono font-extrabold text-[12px] text-accent-lime">
-              2
+              {slipItems.length}
             </div>
             <span className="font-archivo font-extrabold text-[13px] text-bg-primary">In your slip</span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="font-mono font-extrabold text-[15px] text-bg-primary">2.32</span>
+            <span className="font-mono font-extrabold text-[15px] text-bg-primary">{slipTotalOdds.toFixed(2)}</span>
             <ArrowRight size={15} className="text-bg-primary" />
           </div>
         </div>

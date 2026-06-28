@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Anton, Archivo, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
+import { AppProvider } from "./store/AppProvider";
 
 const anton = Anton({
   variable: "--font-anton",
@@ -33,7 +34,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${anton.variable} ${archivo.variable} ${jetbrainsMono.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col bg-bg-primary text-text-primary font-archivo">
-        {children}
+        <AppProvider>{children}</AppProvider>
       </body>
     </html>
   );
