@@ -15,6 +15,12 @@ import {
   LockSimple,
   Plus,
   ArrowRight,
+  Hash,
+  MegaphoneSimple,
+  PushPin,
+  PlusCircle,
+  PaperPlaneRight,
+  UsersThree,
 } from "lucide-react";
 
 type Tab = "home" | "slips" | "proof" | "vip" | "chat";
@@ -147,6 +153,35 @@ function LedgerRow({
       <div className="text-right flex-shrink-0">
         <div className={`font-mono font-extrabold text-[14px] ${statusColor}`}>{status}</div>
         <div className="font-mono text-[11px] text-text-muted mt-0.5">@{odds}</div>
+      </div>
+    </div>
+  );
+}
+
+function ChatMessage({
+  avatar,
+  avatarColor,
+  name,
+  time,
+  text,
+}: {
+  avatar: string;
+  avatarColor: string;
+  name: string;
+  time: string;
+  text: string;
+}) {
+  return (
+    <div className="flex gap-3 mb-5">
+      <div className={`w-9 h-9 rounded-[11px] ${avatarColor} flex items-center justify-center flex-shrink-0 font-archivo font-extrabold text-[14px]`}>
+        {avatar}
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 mb-1.5">
+          <span className="font-archivo font-extrabold text-[13px] text-text-primary">{name}</span>
+          <span className="font-mono text-[10px] text-text-muted">{time}</span>
+        </div>
+        <div className="font-archivo font-medium text-[13px] text-text-secondary leading-snug">{text}</div>
       </div>
     </div>
   );
@@ -535,21 +570,113 @@ export default function AppShell() {
         )}
 
         {tab === "chat" && (
-          <div className="flex flex-col items-center justify-center h-[60vh] px-8 text-center">
-            <ChatCircle size={48} className="text-text-muted mb-4" />
-            <h3 className="font-anton text-[24px] tracking-wider text-text-primary uppercase mb-2">Members&apos; Lounge</h3>
-            <p className="font-archivo font-medium text-[13px] text-text-secondary leading-relaxed">
-              Connect with other members, share insights, and get real-time updates on today&apos;s picks.
-            </p>
-            <div className="mt-6 w-full bg-bg-secondary border border-border-subtle rounded-[14px] p-4">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="w-2 h-2 rounded-full bg-accent-green" />
-                <span className="font-archivo font-bold text-[12px] text-accent-green">Live chat active</span>
+          <div className="flex flex-col h-full">
+            {/* Lounge header */}
+            <div className="flex-shrink-0 px-5 pb-4 border-b border-border-subtle">
+              <div className="flex items-center justify-between py-2">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-[10px] bg-accent-lime flex items-center justify-center">
+                    <Lightning size={18} className="text-bg-primary" />
+                  </div>
+                  <div>
+                    <div className="font-anton text-[18px] text-text-primary tracking-wider uppercase">TMT VIP LOUNGE</div>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-accent-green" />
+                      <span className="font-archivo font-semibold text-[11px] text-text-secondary">214 online</span>
+                    </div>
+                  </div>
+                </div>
+                <UsersThree size={23} className="text-text-secondary" />
               </div>
-              <div className="text-left font-archivo text-[12px] text-text-secondary">
-                <div className="mb-2"><span className="font-bold text-text-primary">Kwame:</span> Big odds on the Accra Hearts slip today 🔥</div>
-                <div className="mb-2"><span className="font-bold text-text-primary">Kofi:</span> Locked in the correct score vault already</div>
-                <div><span className="font-bold text-text-primary">Ama:</span> W7 streak — let&apos;s make it 8 today 💪</div>
+              {/* Channel pills */}
+              <div className="flex gap-1.5 mt-4 overflow-x-auto scrollbar-hide">
+                <div className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-[9px] bg-accent-lime font-archivo font-extrabold text-[11px] text-bg-primary">
+                  <Hash size={11} />
+                  fixed-vip
+                </div>
+                <div className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-[9px] bg-bg-secondary border border-border-subtle font-archivo font-bold text-[11px] text-text-secondary">
+                  <MegaphoneSimple size={11} />
+                  announcements
+                </div>
+                <div className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-[9px] bg-bg-secondary border border-border-subtle font-archivo font-bold text-[11px] text-text-secondary">
+                  <Hash size={11} />
+                  general
+                </div>
+                <div className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-[9px] bg-bg-secondary font-archivo font-bold text-[11px] text-text-muted">
+                  <LockSimple size={11} className="text-accent-gold" />
+                  correct-score
+                </div>
+              </div>
+            </div>
+
+            {/* Chat scroll */}
+            <div className="flex-1 overflow-y-auto scrollbar-hide px-4 pt-4">
+              {/* Admin pinned */}
+              <div className="bg-[rgba(204,255,51,0.07)] border border-border-lime rounded-[13px] p-3 mb-5 flex gap-2">
+                <PushPin size={14} className="text-accent-lime mt-0.5 flex-shrink-0" />
+                <div>
+                  <div className="font-archivo font-extrabold text-[11px] text-accent-lime mb-1">Pinned by admin</div>
+                  <div className="font-archivo font-medium text-[12px] text-text-secondary leading-snug">Today's fixed slip drops at 12:00 GMT. Stake responsibly — 1-2 units max.</div>
+                </div>
+              </div>
+
+              {/* Admin message */}
+              <div className="flex gap-3 mb-5">
+                <div className="w-9 h-9 rounded-[11px] bg-accent-lime flex items-center justify-center flex-shrink-0 font-archivo font-extrabold text-[14px] text-bg-primary">T</div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <span className="font-archivo font-extrabold text-[13px] text-text-primary">TMT Admin</span>
+                    <span className="font-archivo font-extrabold text-[8px] tracking-widest uppercase px-1.5 py-0.5 rounded-[5px] bg-accent-lime text-bg-primary">Admin</span>
+                    <span className="font-mono text-[10px] text-text-muted">11:58</span>
+                  </div>
+                  <div className="font-archivo font-medium text-[13px] text-text-secondary mb-3 leading-snug">Fixed slip is in 🔒 Here's today's confirmed line — full board on the Slips tab.</div>
+                  {/* Embedded slip */}
+                  <div className="mt-3 bg-bg-secondary border border-border-cyan rounded-[12px] p-3">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="font-archivo font-bold text-[10px] text-text-secondary">UCL · Mon 19:00</span>
+                      <span className="font-archivo font-extrabold text-[8px] tracking-widest uppercase px-1.5 py-0.5 rounded-[5px] bg-[rgba(87,217,255,0.14)] text-accent-cyan">Confirmed</span>
+                    </div>
+                    <div className="font-archivo font-extrabold text-[14px] text-text-primary mb-2">Inter vs PSG</div>
+                    <div className="flex items-center justify-between">
+                      <span className="font-archivo font-bold text-[12px] text-accent-cyan">BTTS · Yes</span>
+                      <span className="font-mono font-extrabold text-[16px] text-text-primary">1.72</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Member messages */}
+              <ChatMessage
+                avatar="K"
+                avatarColor="bg-[#1f2937] text-accent-cyan"
+                name="Kwame_GH"
+                time="12:01"
+                text="Bagged the Inter line last week 🙌 staying disciplined this time"
+              />
+              <ChatMessage
+                avatar="A"
+                avatarColor="bg-[#1f2937] text-accent-gold"
+                name="Ama_Accra"
+                time="12:03"
+                text="Is correct-score channel unlocking for Elite this week?"
+              />
+
+              {/* Admin note */}
+              <div className="flex items-center gap-2 justify-center my-2">
+                <div className="flex-1 h-px bg-border-subtle" />
+                <span className="font-archivo font-semibold text-[10px] text-text-muted">Admin created #correct-score · 12:04</span>
+                <div className="flex-1 h-px bg-border-subtle" />
+              </div>
+            </div>
+
+            {/* Composer */}
+            <div className="flex-shrink-0 px-4 pb-3 pt-2.5 border-t border-border-subtle">
+              <div className="flex items-center gap-2.5 bg-bg-secondary border border-white/10 rounded-[14px] px-4 py-2.5">
+                <PlusCircle size={21} className="text-text-muted" />
+                <span className="flex-1 font-archivo font-medium text-[13px] text-text-muted">Message #fixed-vip</span>
+                <div className="w-8 h-8 rounded-[9px] bg-accent-lime flex items-center justify-center">
+                  <PaperPlaneRight size={15} className="text-bg-primary" />
+                </div>
               </div>
             </div>
           </div>
