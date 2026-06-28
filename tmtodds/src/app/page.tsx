@@ -4,23 +4,23 @@ import { useState } from "react";
 import {
   House,
   ListChecks,
-  SealCheck,
-  CrownSimple,
-  ChatCircle,
-  Lightning,
+  ShieldCheck,
+  Crown,
+  MessageCircle,
+  Zap,
   UserCircle,
   Check,
   X,
   Clock,
-  LockSimple,
+  Lock,
   Plus,
   ArrowRight,
   Hash,
-  MegaphoneSimple,
-  PushPin,
+  Megaphone,
+  Pin,
   PlusCircle,
-  PaperPlaneRight,
-  UsersThree,
+  Send,
+  Users,
 } from "lucide-react";
 
 type Tab = "home" | "slips" | "proof" | "vip" | "chat";
@@ -28,9 +28,9 @@ type Tab = "home" | "slips" | "proof" | "vip" | "chat";
 const NAV_ITEMS: { id: Tab; label: string; icon: React.ElementType; activeIcon: React.ElementType }[] = [
   { id: "home", label: "Home", icon: House, activeIcon: House },
   { id: "slips", label: "Slips", icon: ListChecks, activeIcon: ListChecks },
-  { id: "proof", label: "Proof", icon: SealCheck, activeIcon: SealCheck },
-  { id: "vip", label: "VIP", icon: CrownSimple, activeIcon: CrownSimple },
-  { id: "chat", label: "Chat", icon: ChatCircle, activeIcon: ChatCircle },
+  { id: "proof", label: "Proof", icon: ShieldCheck, activeIcon: ShieldCheck },
+  { id: "vip", label: "VIP", icon: Crown, activeIcon: Crown },
+  { id: "chat", label: "Chat", icon: MessageCircle, activeIcon: MessageCircle },
 ];
 
 function StatCard({ value, label, color }: { value: string; label: string; color: string }) {
@@ -230,7 +230,7 @@ function PickCard({
             </>
           ) : (
             <div className="flex items-center gap-2">
-              <LockSimple size={15} className="text-accent-gold" />
+              <Lock size={15} className="text-accent-gold" />
               <div>
                 <div className="font-mono font-extrabold text-[14px] text-text-muted tracking-widest">•• – ••</div>
                 <div className="font-archivo font-semibold text-[11px] text-text-secondary mt-0.5">Unlock to view pick</div>
@@ -265,7 +265,7 @@ export default function AppShell() {
             <div className="flex items-center justify-between px-5 py-2">
               <div className="flex items-center gap-2">
                 <div className="w-7 h-7 rounded-[8px] bg-accent-lime flex items-center justify-center">
-                  <Lightning size={16} className="text-bg-primary" />
+                  <Zap size={16} className="text-bg-primary" />
                 </div>
                 <span className="font-anton text-[20px] tracking-wider text-text-primary uppercase">TMTODDS</span>
               </div>
@@ -438,7 +438,7 @@ export default function AppShell() {
           <div className="px-4 pb-4">
             {/* Header */}
             <div className="flex items-center gap-2 px-5 py-2">
-              <SealCheck size={22} className="text-accent-lime" />
+              <ShieldCheck size={22} className="text-accent-lime" />
               <h2 className="font-anton text-[26px] tracking-wider text-text-primary uppercase">Proof & results</h2>
             </div>
             <p className="font-archivo font-medium text-[12px] text-text-secondary px-5 mb-4 leading-snug">
@@ -499,7 +499,7 @@ export default function AppShell() {
         {tab === "vip" && (
           <div className="px-4 pb-4">
             <div className="flex items-center gap-2 px-5 py-2">
-              <CrownSimple size={22} className="text-accent-lime" />
+              <Crown size={22} className="text-accent-lime" />
               <h2 className="font-anton text-[26px] tracking-wider text-text-primary uppercase">VIP packages</h2>
             </div>
             <p className="font-archivo font-medium text-[12px] text-text-secondary px-5 mb-4 leading-snug">
@@ -576,7 +576,7 @@ export default function AppShell() {
               <div className="flex items-center justify-between py-2">
                 <div className="flex items-center gap-3">
                   <div className="w-9 h-9 rounded-[10px] bg-accent-lime flex items-center justify-center">
-                    <Lightning size={18} className="text-bg-primary" />
+                    <Zap size={18} className="text-bg-primary" />
                   </div>
                   <div>
                     <div className="font-anton text-[18px] text-text-primary tracking-wider uppercase">TMT VIP LOUNGE</div>
@@ -586,7 +586,7 @@ export default function AppShell() {
                     </div>
                   </div>
                 </div>
-                <UsersThree size={23} className="text-text-secondary" />
+                <Users size={23} className="text-text-secondary" />
               </div>
               {/* Channel pills */}
               <div className="flex gap-1.5 mt-4 overflow-x-auto scrollbar-hide">
@@ -595,7 +595,7 @@ export default function AppShell() {
                   fixed-vip
                 </div>
                 <div className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-[9px] bg-bg-secondary border border-border-subtle font-archivo font-bold text-[11px] text-text-secondary">
-                  <MegaphoneSimple size={11} />
+                  <Megaphone size={11} />
                   announcements
                 </div>
                 <div className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-[9px] bg-bg-secondary border border-border-subtle font-archivo font-bold text-[11px] text-text-secondary">
@@ -603,7 +603,7 @@ export default function AppShell() {
                   general
                 </div>
                 <div className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-[9px] bg-bg-secondary font-archivo font-bold text-[11px] text-text-muted">
-                  <LockSimple size={11} className="text-accent-gold" />
+                  <Lock size={11} className="text-accent-gold" />
                   correct-score
                 </div>
               </div>
@@ -613,7 +613,7 @@ export default function AppShell() {
             <div className="flex-1 overflow-y-auto scrollbar-hide px-4 pt-4">
               {/* Admin pinned */}
               <div className="bg-[rgba(204,255,51,0.07)] border border-border-lime rounded-[13px] p-3 mb-5 flex gap-2">
-                <PushPin size={14} className="text-accent-lime mt-0.5 flex-shrink-0" />
+                <Pin size={14} className="text-accent-lime mt-0.5 flex-shrink-0" />
                 <div>
                   <div className="font-archivo font-extrabold text-[11px] text-accent-lime mb-1">Pinned by admin</div>
                   <div className="font-archivo font-medium text-[12px] text-text-secondary leading-snug">Today's fixed slip drops at 12:00 GMT. Stake responsibly — 1-2 units max.</div>
@@ -675,7 +675,7 @@ export default function AppShell() {
                 <PlusCircle size={21} className="text-text-muted" />
                 <span className="flex-1 font-archivo font-medium text-[13px] text-text-muted">Message #fixed-vip</span>
                 <div className="w-8 h-8 rounded-[9px] bg-accent-lime flex items-center justify-center">
-                  <PaperPlaneRight size={15} className="text-bg-primary" />
+                  <Send size={15} className="text-bg-primary" />
                 </div>
               </div>
             </div>
