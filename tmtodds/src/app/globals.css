@@ -50,21 +50,6 @@
   .safe-bottom {
     padding-bottom: env(safe-area-inset-bottom, 16px);
   }
-  .phone-shell {
-    width: 100%;
-    max-width: 414px;
-    margin: 0 auto;
-    min-height: 100dvh;
-    position: relative;
-    background: #0B0C0F;
-    overflow: hidden;
-  }
-  @media (min-width: 640px) {
-    .phone-shell {
-      border-left: 1px solid rgba(255, 255, 255, 0.05);
-      border-right: 1px solid rgba(255, 255, 255, 0.05);
-    }
-  }
   .h-px {
     height: 1px;
   }
