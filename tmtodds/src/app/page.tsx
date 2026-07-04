@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import {
   House,
   ListChecks,
@@ -11,29 +12,58 @@ import {
   UserCircle,
   Check,
   X,
+  Minus,
   Clock,
   Lock,
   Plus,
   ArrowRight,
   Hash,
-  Megaphone,
-  Pin,
-  PlusCircle,
-  Send,
   Users,
   LogIn,
   LogOut,
+  Send,
+  Settings,
 } from "lucide-react";
 import { useApp } from "./store/AppProvider";
+import type { Tab } from "./store/AppContext";
+import { PLANS, isPlanActive, type PlanId, type Tier } from "@/lib/plans";
+import { formatKickoff, formatClock, formatShortDate } from "@/lib/format";
+import type { PickDTO, ChatMessageDTO, PickStatus } from "@/lib/types";
 
-type Tab = "home" | "slips" | "proof" | "vip" | "chat";
+const NAV_ITEMS: { id: Tab; label: string; icon: React.ElementType }[] = [
+  { id: "home", label: "Home", icon: House },
+  { id: "slips", label: "Slips", icon: ListChecks },
+  { id: "proof", label: "Proof", icon: ShieldCheck },
+  { id: "vip", label: "VIP", icon: Crown },
+  { id: "chat", label: "Chat", icon: MessageCircle },
+];
 
-const NAV_ITEMS: { id: Tab; label: string; icon: React.ElementType; activeIcon: React.ElementType }[] = [
-  { id: "home", label: "Home", icon: House, activeIcon: House },
-  { id: "slips", label: "Slips", icon: ListChecks, activeIcon: ListChecks },
-  { id: "proof", label: "Proof", icon: ShieldCheck, activeIcon: ShieldCheck },
-  { id: "vip", label: "VIP", icon: Crown, activeIcon: Crown },
-  { id: "chat", label: "Chat", icon: MessageCircle, activeIcon: MessageCircle },
+const TIER_META: Record<Tier, { label: string; tagStyle: string }> = {
+  free: { label: "Free", tagStyle: "bg-white/8 text-[#B8C0CC]" },
+  weekly: { label: "Weekly", tagStyle: "bg-[rgba(204,255,51,0.14)] text-accent-lime" },
+  pro: { label: "Pro analysis", tagStyle: "bg-[rgba(87,217,255,0.14)] text-accent-cyan" },
+  elite: { label: "Elite", tagStyle: "bg-white/10 text-text-secondary" },
+  correct_score: { label: "Correct score", tagStyle: "bg-[rgba(245,196,81,0.14)] text-accent-gold" },
+};
+
+const STATUS_META: Record<PickStatus, { label: string; color: string; bg: string; Icon: React.ElementType }> = {
+  won: { label: "WON", color: "text-accent-green", bg: "bg-[rgba(52,224,138,0.14)]", Icon: Check },
+  lost: { label: "LOST", color: "text-accent-red", bg: "bg-[rgba(255,77,77,0.13)]", Icon: X },
+  void: { label: "VOID", color: "text-text-muted", bg: "bg-white/8", Icon: Minus },
+  pending: { label: "PENDING", color: "text-accent-gold", bg: "bg-[rgba(245,196,81,0.14)]", Icon: Clock },
+};
+
+const PLAN_STYLE: Record<PlanId, { tagColor: string; ctaStyle: string; borderColor: string; gradient?: string }> = {
+  weekly: { tagColor: "text-accent-lime", ctaStyle: "border border-white/16 text-text-primary", borderColor: "border-border-subtle" },
+  pro: { tagColor: "text-accent-cyan", ctaStyle: "bg-accent-lime text-bg-primary", borderColor: "border-accent-lime", gradient: "bg-gradient-to-br from-[#1a2410] to-bg-secondary" },
+  elite: { tagColor: "text-text-secondary", ctaStyle: "border border-white/16 text-text-primary", borderColor: "border-border-subtle" },
+  correct_score: { tagColor: "text-accent-gold", ctaStyle: "bg-accent-gold text-bg-primary", borderColor: "border-border-gold" },
+};
+
+const CHANNELS: { id: string; label: string; locked: boolean }[] = [
+  { id: "announcements", label: "announcements", locked: false },
+  { id: "general", label: "general", locked: false },
+  { id: "correct_score", label: "correct-score", locked: true },
 ];
 
 function AuthModal({ onClose }: { onClose: () => void }) {
@@ -43,18 +73,32 @@ function AuthModal({ onClose }: { onClose: () => void }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [info, setInfo] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
-  const submit = () => {
+  const submit = async () => {
     setError("");
+    setInfo("");
     if (isRegister) {
-      if (!name || !email || !password) { setError("All fields are required"); return; }
-      const ok = register(name, email, password);
-      if (!ok) setError("Email already exists");
+      if (!name || !email || !password) {
+        setError("All fields are required");
+        return;
+      }
+      setSubmitting(true);
+      const res = await register(name, email, password);
+      setSubmitting(false);
+      if (!res.ok) setError(res.error ?? "Could not create account");
+      else if (res.message) setInfo(res.message);
       else onClose();
     } else {
-      if (!email || !password) { setError("Email and password required"); return; }
-      const ok = login(email, password);
-      if (!ok) setError("Invalid credentials");
+      if (!email || !password) {
+        setError("Email and password required");
+        return;
+      }
+      setSubmitting(true);
+      const res = await login(email, password);
+      setSubmitting(false);
+      if (!res.ok) setError(res.error ?? "Invalid credentials");
       else onClose();
     }
   };
@@ -71,10 +115,13 @@ function AuthModal({ onClose }: { onClose: () => void }) {
         )}
         <input className="w-full bg-bg-primary border border-border-subtle rounded-[12px] px-4 py-3 font-archivo text-[13px] text-text-primary mb-3 outline-none focus:border-accent-lime" placeholder="Email" type="email" value={email} onChange={e => setEmail(e.target.value)} />
         <input className="w-full bg-bg-primary border border-border-subtle rounded-[12px] px-4 py-3 font-archivo text-[13px] text-text-primary mb-3 outline-none focus:border-accent-lime" placeholder="Password" type="password" value={password} onChange={e => setPassword(e.target.value)} />
+        {info && <p className="text-accent-lime text-[11px] font-archivo mb-2 leading-snug">{info}</p>}
         {error && <p className="text-accent-red text-[11px] font-archivo mb-2">{error}</p>}
-        <button onClick={submit} className="w-full bg-accent-lime text-bg-primary font-archivo font-extrabold text-[14px] rounded-[14px] py-3">{isRegister ? "Sign up" : "Log in"}</button>
+        <button onClick={submit} disabled={submitting} className="w-full bg-accent-lime text-bg-primary font-archivo font-extrabold text-[14px] rounded-[14px] py-3 disabled:opacity-60">
+          {submitting ? "Please wait…" : isRegister ? "Sign up" : "Log in"}
+        </button>
         <p className="text-center font-archivo font-medium text-[11px] text-text-muted mt-3">
-          {isRegister ? "Already have an account?" : "New here?"} <button onClick={() => setIsRegister(!isRegister)} className="text-accent-lime">{isRegister ? "Log in" : "Create one"}</button>
+          {isRegister ? "Already have an account?" : "New here?"} <button onClick={() => { setIsRegister(!isRegister); setError(""); setInfo(""); }} className="text-accent-lime">{isRegister ? "Log in" : "Create one"}</button>
         </p>
       </div>
     </div>
@@ -104,180 +151,112 @@ function FormBadge({ letter, variant }: { letter: string; variant: "win" | "loss
 }
 
 function TierCard({
-  title,
-  subtitle,
-  tag,
-  tagColor,
-  price,
-  period,
-  features,
-  cta,
-  ctaStyle,
-  borderColor,
-  gradient,
+  plan,
+  style,
+  isCurrent,
+  loading,
   onClick,
 }: {
-  title: string;
-  subtitle: string;
-  tag?: string;
-  tagColor?: string;
-  price: string;
-  period: string;
-  features: string[];
-  cta: string;
-  ctaStyle: string;
-  borderColor?: string;
-  gradient?: string;
-  onClick?: () => void;
+  plan: (typeof PLANS)[number];
+  style: (typeof PLAN_STYLE)[PlanId];
+  isCurrent: boolean;
+  loading: boolean;
+  onClick: () => void;
 }) {
   return (
-    <div
-      onClick={onClick}
-      className={`relative rounded-[18px] p-4 ${gradient || "bg-bg-secondary"} ${borderColor ? `border ${borderColor}` : "border border-border-subtle"} ${onClick ? "cursor-pointer" : ""}`}
-    >
-      {tag && (
-        <div className={`absolute -top-2.5 left-4 rounded-[6px] px-2 py-0.5 font-archivo font-extrabold text-[9px] tracking-wider uppercase ${tagColor}`}>
-          {tag}
-        </div>
-      )}
+    <div className={`relative rounded-[18px] p-4 ${style.gradient || "bg-bg-secondary"} border ${style.borderColor}`}>
       <div className="flex items-start justify-between mb-3">
         <div>
-          {tagColor && <div className={`font-archivo font-extrabold text-[9px] tracking-widest uppercase mb-1 ${tagColor}`}>{tag}</div>}
-          <div className="font-archivo font-extrabold text-[17px] text-text-primary">{title}</div>
-          <div className="font-archivo font-medium text-[11px] text-text-secondary mt-0.5">{subtitle}</div>
+          <div className={`font-archivo font-extrabold text-[9px] tracking-widest uppercase mb-1 ${style.tagColor}`}>{plan.tag}</div>
+          <div className="font-archivo font-extrabold text-[17px] text-text-primary">{plan.title}</div>
+          <div className="font-archivo font-medium text-[11px] text-text-secondary mt-0.5">{plan.subtitle}</div>
         </div>
         <div className="text-right">
-          <div className="font-mono font-extrabold text-[26px] leading-none text-text-primary">{price}</div>
-          <div className="font-mono text-[9px] text-text-muted">{period}</div>
+          <div className="font-mono font-extrabold text-[26px] leading-none text-text-primary">₵{plan.priceGHS}</div>
+          <div className="font-mono text-[9px] text-text-muted">{plan.periodLabel}</div>
         </div>
       </div>
       <div className="flex flex-col gap-1.5 mb-3">
-        {features.map((f) => (
+        {plan.features.map((f) => (
           <div key={f} className="flex items-center gap-2">
-            <Check size={13} className={tagColor || "text-accent-lime"} />
+            <Check size={13} className={style.tagColor} />
             <span className="font-archivo font-medium text-[12px] text-text-secondary">{f}</span>
           </div>
         ))}
       </div>
-      <div className={`rounded-[12px] py-3 text-center font-archivo font-extrabold text-[14px] ${ctaStyle}`}>
-        {cta}
-      </div>
+      <button
+        onClick={onClick}
+        disabled={loading || isCurrent}
+        className={`w-full rounded-[12px] py-3 text-center font-archivo font-extrabold text-[14px] ${style.ctaStyle} disabled:opacity-60`}
+      >
+        {isCurrent ? "Current plan" : loading ? "Redirecting…" : "Subscribe"}
+      </button>
     </div>
   );
 }
 
-function LedgerRow({
-  match,
-  market,
-  date,
-  status,
-  odds,
-  statusColor,
-}: {
-  match: string;
-  market: string;
-  date: string;
-  status: string;
-  odds: string;
-  statusColor: string;
-}) {
-  const iconMap: Record<string, React.ElementType> = {
-    WON: Check,
-    LOST: X,
-    PENDING: Clock,
-  };
-  const bgMap: Record<string, string> = {
-    WON: "bg-[rgba(52,224,138,0.14)]",
-    LOST: "bg-[rgba(255,77,77,0.13)]",
-    PENDING: "bg-[rgba(245,196,81,0.14)]",
-  };
-  const Icon = iconMap[status] || Clock;
+function LedgerRow({ pick }: { pick: PickDTO }) {
+  const meta = STATUS_META[pick.status];
+  const Icon = meta.Icon;
   return (
     <div className="bg-bg-secondary border border-border-subtle rounded-[14px] p-3 flex items-center gap-3">
-      <div className={`w-9 h-9 rounded-[10px] ${bgMap[status]} flex items-center justify-center flex-shrink-0`}>
-        <Icon size={18} className={statusColor} />
+      <div className={`w-9 h-9 rounded-[10px] ${meta.bg} flex items-center justify-center flex-shrink-0`}>
+        <Icon size={18} className={meta.color} />
       </div>
       <div className="flex-1 min-w-0">
-        <div className="font-archivo font-extrabold text-[13px] text-text-primary truncate">{match}</div>
-        <div className="font-archivo font-medium text-[11px] text-text-secondary mt-0.5">{market} · {date}</div>
+        <div className="font-archivo font-extrabold text-[13px] text-text-primary truncate">{pick.fixture}</div>
+        <div className="font-archivo font-medium text-[11px] text-text-secondary mt-0.5">{pick.market} · {formatShortDate(pick.kickoffAt)}</div>
       </div>
       <div className="text-right flex-shrink-0">
-        <div className={`font-mono font-extrabold text-[14px] ${statusColor}`}>{status}</div>
-        <div className="font-mono text-[11px] text-text-muted mt-0.5">@{odds}</div>
+        <div className={`font-mono font-extrabold text-[14px] ${meta.color}`}>{meta.label}</div>
+        <div className="font-mono text-[11px] text-text-muted mt-0.5">@{pick.odds?.toFixed(2)}</div>
       </div>
     </div>
   );
 }
 
-function ChatMessage({
-  avatar,
-  avatarColor,
-  name,
-  time,
-  text,
-}: {
-  avatar: string;
-  avatarColor: string;
-  name: string;
-  time: string;
-  text: string;
-}) {
+function ChatMessage({ message }: { message: ChatMessageDTO }) {
+  const initial = message.authorName.charAt(0).toUpperCase();
   return (
     <div className="flex gap-3 mb-5">
-      <div className={`w-9 h-9 rounded-[11px] ${avatarColor} flex items-center justify-center flex-shrink-0 font-archivo font-extrabold text-[14px]`}>
-        {avatar}
+      <div className={`w-9 h-9 rounded-[11px] flex items-center justify-center flex-shrink-0 font-archivo font-extrabold text-[14px] ${message.isAdmin ? "bg-accent-lime text-bg-primary" : "bg-[#1f2937] text-accent-cyan"}`}>
+        {initial}
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-1.5">
-          <span className="font-archivo font-extrabold text-[13px] text-text-primary">{name}</span>
-          <span className="font-mono text-[10px] text-text-muted">{time}</span>
+          <span className="font-archivo font-extrabold text-[13px] text-text-primary">{message.authorName}</span>
+          {message.isAdmin && (
+            <span className="font-archivo font-extrabold text-[8px] tracking-widest uppercase px-1.5 py-0.5 rounded-[5px] bg-accent-lime text-bg-primary">Admin</span>
+          )}
+          <span className="font-mono text-[10px] text-text-muted">{formatClock(message.createdAt)}</span>
         </div>
-        <div className="font-archivo font-medium text-[13px] text-text-secondary leading-snug">{text}</div>
+        <div className="font-archivo font-medium text-[13px] text-text-secondary leading-snug">{message.body}</div>
       </div>
     </div>
   );
 }
 
-function PickCard({
-  league,
-  time,
-  fixture,
-  market,
-  odds,
-  tag,
-  tagStyle,
-  locked,
-  addedToSlip,
-  onToggle,
-}: {
-  league: string;
-  time: string;
-  fixture: string;
-  market: string;
-  odds: string;
-  tag: string;
-  tagStyle: string;
-  locked?: boolean;
-  addedToSlip?: boolean;
-  onToggle?: () => void;
-}) {
+function PickCard({ pick, addedToSlip, onToggle }: { pick: PickDTO; addedToSlip: boolean; onToggle: () => void }) {
+  const meta = TIER_META[pick.tier];
+  const locked = pick.locked;
   return (
-    <div className={`rounded-[16px] p-4 ${locked ? "bg-bg-secondary border border-border-gold" : "bg-bg-secondary border border-border-subtle"}`}>
+    <div className={`rounded-[16px] p-4 bg-bg-secondary border ${locked ? "border-border-gold" : "border-border-subtle"}`}>
       <div className="flex items-center justify-between mb-2">
-        <span className="font-archivo font-semibold text-[11px] text-text-secondary">{league} · {time}</span>
-        <span className={`font-archivo font-extrabold text-[9px] tracking-wider uppercase px-2 py-0.5 rounded-[6px] ${tagStyle}`}>{tag}</span>
+        <span className="font-archivo font-semibold text-[11px] text-text-secondary">{pick.league} · {formatKickoff(pick.kickoffAt)}</span>
+        <span className={`font-archivo font-extrabold text-[9px] tracking-wider uppercase px-2 py-0.5 rounded-[6px] ${meta.tagStyle}`}>{meta.label}</span>
       </div>
-      <div className="font-archivo font-extrabold text-[17px] text-text-primary mb-3">{fixture}</div>
+      <div className="font-archivo font-extrabold text-[17px] text-text-primary mb-3">{pick.fixture}</div>
       <div className="flex items-end justify-between">
         <div>
-          <div className={`font-archivo font-bold text-[13px] ${locked ? "text-text-muted" : "text-accent-lime"}`}>{market}</div>
-          {!locked && <div className="font-archivo font-medium text-[11px] text-text-secondary mt-0.5">Total goals</div>}
+          <div className={`font-archivo font-bold text-[13px] ${locked ? "text-text-muted" : "text-accent-lime"}`}>
+            {locked ? "Locked pick" : pick.market}
+          </div>
         </div>
         <div className="flex items-center gap-2">
           {!locked ? (
             <>
               <div className="text-right">
-                <div className="font-mono font-extrabold text-[20px] leading-none text-text-primary">{odds}</div>
+                <div className="font-mono font-extrabold text-[20px] leading-none text-text-primary">{pick.odds?.toFixed(2)}</div>
               </div>
               <button
                 onClick={onToggle}
@@ -302,11 +281,42 @@ function PickCard({
 }
 
 export default function AppShell() {
-  const { tab, setTab, picks, toggleSlip, slipItems, user, logout } = useApp();
+  const {
+    tab, setTab,
+    profile, logout,
+    todayPicks, picksLoading, toggleSlip, slipItems,
+    ledger, stats, ledgerLoading,
+    chatMessages, chatLocked, chatLoading, activeChannel, setActiveChannel, sendMessage,
+    startCheckout, checkoutLoading, checkoutError,
+  } = useApp();
+
   const [showAuth, setShowAuth] = useState(false);
+  const [ledgerExpanded, setLedgerExpanded] = useState(false);
+  const [chatText, setChatText] = useState("");
+  const [chatError, setChatError] = useState("");
 
   const slipTotalOdds = slipItems.reduce((acc, item) => acc * item.odds, 1);
-  const leagues = ["All", "Premier League", "UCL", "LaLiga", "Serie A"];
+  const isInSlip = (id: string) => slipItems.some((i) => i.pickId === id);
+
+  const freePick = todayPicks.find((p) => p.tier === "free");
+  const recentForm = ledger
+    .filter((p) => p.status === "won" || p.status === "lost" || p.status === "void")
+    .slice(0, 7)
+    .reverse();
+
+  const visibleLedger = ledgerExpanded ? ledger : ledger.slice(0, 8);
+
+  const handleSend = async () => {
+    const text = chatText.trim();
+    if (!text) return;
+    setChatText("");
+    setChatError("");
+    const res = await sendMessage(text);
+    if (!res.ok) {
+      setChatError(res.error ?? "Message failed to send");
+      setChatText(text);
+    }
+  };
 
   return (
     <div className="phone-shell flex flex-col">
@@ -334,9 +344,14 @@ export default function AppShell() {
                 <span className="font-anton text-[20px] tracking-wider text-text-primary uppercase">TMTODDS</span>
               </div>
               <div className="flex items-center gap-3">
-                {user ? (
+                {profile?.role === "admin" && (
+                  <Link href="/admin" className="text-text-secondary">
+                    <Settings size={19} />
+                  </Link>
+                )}
+                {profile ? (
                   <div className="flex items-center gap-2">
-                    <span className="font-mono text-[10px] font-bold text-text-secondary border border-white/16 rounded-[20px] px-2 py-0.5">{user.name}</span>
+                    <span className="font-mono text-[10px] font-bold text-text-secondary border border-white/16 rounded-[20px] px-2 py-0.5">{profile.name}</span>
                     <button onClick={logout} className="text-text-secondary"><LogOut size={18} /></button>
                   </div>
                 ) : (
@@ -352,7 +367,7 @@ export default function AppShell() {
               <div className="absolute top-3 right-3 font-mono text-[9px] text-text-muted">[ PLAYER PHOTO ]</div>
               <div className="absolute top-3 left-3 flex items-center gap-1.5 bg-black/45 border border-white/14 rounded-[20px] px-2.5 py-1 backdrop-blur-sm">
                 <span className="w-1.5 h-1.5 rounded-full bg-accent-red animate-pulse-live" />
-                <span className="font-archivo font-extrabold text-[10px] tracking-wider uppercase text-white">12 slips live today</span>
+                <span className="font-archivo font-extrabold text-[10px] tracking-wider uppercase text-white">{todayPicks.length} picks live today</span>
               </div>
               <div className="absolute left-0 right-0 bottom-0 p-5">
                 <div className="font-archivo font-extrabold text-[11px] tracking-widest uppercase text-accent-lime mb-1.5">
@@ -368,9 +383,9 @@ export default function AppShell() {
 
             {/* Stats */}
             <div className="flex gap-2 p-4 pb-1">
-              <StatCard value="87%" label="Win rate · 30d" color="text-accent-lime" />
-              <StatCard value="200+" label="Slips delivered" color="text-text-primary" />
-              <StatCard value="W7" label="Win streak" color="text-accent-green" />
+              <StatCard value={stats?.winRate30 != null ? `${stats.winRate30}%` : "—"} label="Win rate · 30d" color="text-accent-lime" />
+              <StatCard value={stats ? String(stats.totalDelivered) : "—"} label="Picks posted" color="text-text-primary" />
+              <StatCard value={stats && stats.streak > 0 ? `W${stats.streak}` : "—"} label="Win streak" color="text-accent-green" />
             </div>
 
             {/* Free pick */}
@@ -382,51 +397,60 @@ export default function AppShell() {
                 Free zone
               </span>
             </div>
-            <div className="mx-4 bg-bg-secondary border border-border-subtle rounded-[16px] p-3.5">
-              <div className="flex items-center justify-between mb-2">
-                <span className="font-archivo font-bold text-[11px] text-text-secondary">Premier League</span>
-                <span className="font-mono text-[11px] text-text-muted">Sun · 15:00</span>
-              </div>
-              <div className="font-archivo font-extrabold text-[19px] text-text-primary mb-3">
-                Arsenal <span className="text-text-muted">vs</span> Aston Villa
-              </div>
-              <div className="flex items-end justify-between">
-                <div>
-                  <div className="font-archivo font-bold text-[13px] text-accent-lime">Over 1.5 · Yes</div>
-                  <div className="font-archivo font-medium text-[11px] text-text-secondary mt-0.5">Total goals</div>
+            {freePick ? (
+              <div className="mx-4 bg-bg-secondary border border-border-subtle rounded-[16px] p-3.5">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="font-archivo font-bold text-[11px] text-text-secondary">{freePick.league}</span>
+                  <span className="font-mono text-[11px] text-text-muted">{formatKickoff(freePick.kickoffAt)}</span>
                 </div>
-                <div className="text-right">
-                  <div className="font-mono font-extrabold text-[22px] leading-none text-text-primary">1.35</div>
-                  <div className="font-archivo font-bold text-[8px] tracking-widest text-text-muted mt-0.5">ODDS</div>
+                <div className="font-archivo font-extrabold text-[19px] text-text-primary mb-3">{freePick.fixture}</div>
+                <div className="flex items-end justify-between">
+                  <div>
+                    <div className="font-archivo font-bold text-[13px] text-accent-lime">{freePick.market}</div>
+                  </div>
+                  <div className="text-right">
+                    <div className="font-mono font-extrabold text-[22px] leading-none text-text-primary">{freePick.odds?.toFixed(2)}</div>
+                    <div className="font-archivo font-bold text-[8px] tracking-widest text-text-muted mt-0.5">ODDS</div>
+                  </div>
                 </div>
               </div>
-            </div>
+            ) : (
+              <div className="mx-4 bg-bg-secondary border border-border-subtle rounded-[16px] p-5 text-center">
+                <span className="font-archivo font-medium text-[12px] text-text-secondary">No free pick posted yet today — check back soon.</span>
+              </div>
+            )}
 
             {/* Recent form */}
             <div className="px-5 pt-5 pb-1.5 flex items-center justify-between">
               <span className="font-archivo font-extrabold text-[12px] tracking-widest uppercase text-text-secondary">
                 Recent form
               </span>
-              <span className="font-archivo font-bold text-[11px] text-accent-lime">See proof →</span>
+              <button onClick={() => setTab("proof")} className="font-archivo font-bold text-[11px] text-accent-lime">See proof →</button>
             </div>
-            <div className="flex gap-1.5 px-4">
-              <FormBadge letter="W" variant="win" />
-              <FormBadge letter="W" variant="win" />
-              <FormBadge letter="L" variant="loss" />
-              <FormBadge letter="W" variant="win" />
-              <FormBadge letter="W" variant="win" />
-              <FormBadge letter="W" variant="win" />
-              <FormBadge letter="··" variant="draw" />
-            </div>
+            {recentForm.length > 0 ? (
+              <div className="flex gap-1.5 px-4">
+                {recentForm.map((p) => (
+                  <FormBadge
+                    key={p.id}
+                    letter={p.status === "won" ? "W" : p.status === "lost" ? "L" : "·"}
+                    variant={p.status === "won" ? "win" : p.status === "lost" ? "loss" : "draw"}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="px-5">
+                <span className="font-archivo font-medium text-[11px] text-text-muted">No settled picks yet.</span>
+              </div>
+            )}
 
             {/* CTA */}
             <div className="p-4 pt-5">
-              <div className="bg-accent-lime rounded-[15px] p-4 flex items-center justify-center gap-2">
+              <button onClick={() => setTab("vip")} className="w-full bg-accent-lime rounded-[15px] p-4 flex items-center justify-center gap-2">
                 <Check size={19} className="text-bg-primary" />
                 <span className="font-archivo font-extrabold text-[15px] tracking-wide text-bg-primary">
                   Unlock VIP packages
                 </span>
-              </div>
+              </button>
               <div className="text-center font-archivo font-medium text-[11px] text-text-muted mt-3">
                 18+ only · Gambling can be addictive · Play responsibly
               </div>
@@ -448,22 +472,27 @@ export default function AppShell() {
             </p>
 
             <div className="px-4 flex flex-col gap-2.5">
-              {picks.map((p) => (
-                <PickCard key={p.id} {...p} onToggle={() => toggleSlip(p.id)} />
-              ))}
+              {picksLoading ? (
+                <div className="text-center py-8"><span className="font-archivo text-[12px] text-text-muted">Loading today&apos;s picks…</span></div>
+              ) : todayPicks.length === 0 ? (
+                <div className="text-center py-8"><span className="font-archivo text-[12px] text-text-muted">No picks posted yet today — check back soon.</span></div>
+              ) : (
+                todayPicks.map((p) => (
+                  <PickCard key={p.id} pick={p} addedToSlip={isInSlip(p.id)} onToggle={() => toggleSlip(p.id)} />
+                ))
+              )}
             </div>
           </div>
         )}
 
         {tab === "proof" && (
           <div className="px-4 pb-4">
-            {/* Header */}
             <div className="flex items-center gap-2 px-5 py-2">
               <ShieldCheck size={22} className="text-accent-lime" />
               <h2 className="font-anton text-[26px] tracking-wider text-text-primary uppercase">Proof & results</h2>
             </div>
             <p className="font-archivo font-medium text-[12px] text-text-secondary px-5 mb-4 leading-snug">
-              Every pick logged with its outcome. Win, lose, or pending — nothing hidden.
+              Every pick logged with its outcome. Win, lose, or void — nothing hidden.
             </p>
 
             {/* Win rate hero */}
@@ -471,17 +500,25 @@ export default function AppShell() {
               <div className="flex items-end justify-between">
                 <div>
                   <div className="font-archivo font-extrabold text-[10px] tracking-widest uppercase text-accent-lime mb-2">
-                    Verified · last 30 days
+                    Last 30 days
                   </div>
-                  <div className="font-mono font-extrabold text-[60px] leading-[0.82] text-text-primary">
-                    87<span className="text-[30px] text-accent-lime">%</span>
-                  </div>
-                  <div className="font-archivo font-semibold text-[12px] text-text-secondary mt-2">
-                    52 won · 8 lost · settled slips
-                  </div>
+                  {stats?.winRate30 != null ? (
+                    <>
+                      <div className="font-mono font-extrabold text-[60px] leading-[0.82] text-text-primary">
+                        {stats.winRate30}<span className="text-[30px] text-accent-lime">%</span>
+                      </div>
+                      <div className="font-archivo font-semibold text-[12px] text-text-secondary mt-2">
+                        {stats.wonLast30} won · {stats.lostLast30} lost · settled picks
+                      </div>
+                    </>
+                  ) : (
+                    <div className="font-archivo font-semibold text-[14px] text-text-secondary py-3 max-w-[220px]">
+                      No settled picks in the last 30 days yet.
+                    </div>
+                  )}
                 </div>
                 <div className="flex flex-col items-center gap-1 pb-1">
-                  <div className="font-mono font-extrabold text-[24px] text-accent-green">W7</div>
+                  <div className="font-mono font-extrabold text-[24px] text-accent-green">{stats && stats.streak > 0 ? `W${stats.streak}` : "—"}</div>
                   <div className="font-archivo font-bold text-[9px] tracking-widest uppercase text-text-muted">streak</div>
                 </div>
               </div>
@@ -489,15 +526,23 @@ export default function AppShell() {
 
             {/* Ledger */}
             <div className="px-4 flex flex-col gap-2 pt-3">
-              <LedgerRow match="Inter — PSG" market="BTTS · Yes · 11 May" date="" status="WON" odds="1.72" statusColor="text-accent-green" />
-              <LedgerRow match="Milan — Napoli" market="Correct Score · 2-1 · 12 May" date="" status="WON" odds="9.00" statusColor="text-accent-green" />
-              <LedgerRow match="Bayern — Leipzig" market="Over 2.5 · Yes · 10 May" date="" status="LOST" odds="1.55" statusColor="text-accent-red" />
-              <LedgerRow match="Arsenal — Aston Villa" market="Over 1.5 · Yes · Today 15:00" date="" status="PENDING" odds="1.35" statusColor="text-accent-gold" />
-              <LedgerRow match="Real Madrid — Girona" market="Home · Win · 9 May" date="" status="WON" odds="1.40" statusColor="text-accent-green" />
+              {ledgerLoading ? (
+                <div className="text-center py-8"><span className="font-archivo text-[12px] text-text-muted">Loading results…</span></div>
+              ) : ledger.length === 0 ? (
+                <div className="text-center py-8">
+                  <span className="font-archivo text-[12px] text-text-muted">No settled picks yet. Once picks are posted and settled, every result shows up here.</span>
+                </div>
+              ) : (
+                visibleLedger.map((p) => <LedgerRow key={p.id} pick={p} />)
+              )}
             </div>
-            <div className="text-center py-4">
-              <span className="font-archivo font-bold text-[12px] text-accent-lime">View full ledger →</span>
-            </div>
+            {!ledgerLoading && ledger.length > visibleLedger.length && (
+              <div className="text-center py-4">
+                <button onClick={() => setLedgerExpanded(true)} className="font-archivo font-bold text-[12px] text-accent-lime">
+                  Show all {ledger.length} results →
+                </button>
+              </div>
+            )}
           </div>
         )}
 
@@ -508,68 +553,31 @@ export default function AppShell() {
               <h2 className="font-anton text-[26px] tracking-wider text-text-primary uppercase">VIP packages</h2>
             </div>
             <p className="font-archivo font-medium text-[12px] text-text-secondary px-5 mb-4 leading-snug">
-              Pick a tier. Unlock the board, the picks, and the members&apos; lounge.{" "}
-              <span className="text-accent-gold">Demo mode — no real charge.</span>
+              Pick a tier. Unlock the board, the picks, and the members&apos; lounge.
             </p>
+            {checkoutError && <p className="px-5 text-accent-red text-[12px] font-archivo mb-3">{checkoutError}</p>}
 
             <div className="flex flex-col gap-3">
-              <TierCard
-                title="TMT Fixed Pass"
-                subtitle="7 days · weekly"
-                tag="Fixed"
-                tagColor="text-accent-lime"
-                price="₵70"
-                period="/week"
-                features={["Fixed-match slips", "Members' lounge access"]}
-                cta="Subscribe"
-                ctaStyle="border border-white/16 rounded-[12px] text-text-primary font-extrabold"
-                borderColor="border-border-subtle"
-              />
-
-              <div className="relative">
-                <div className="absolute -top-2.5 left-4 bg-accent-lime rounded-[6px] px-2 py-0.5 font-archivo font-extrabold text-[9px] tracking-wider uppercase text-bg-primary z-10">
-                  Most popular
-                </div>
-                <TierCard
-                  title="TMT Pro Confirmed"
-                  subtitle="7 days · weekly"
-                  tag="Fixed + Confirmed"
-                  tagColor="text-accent-cyan"
-                  price="₵150"
-                  period="/week"
-                  features={["Everything in Fixed", "Confirmed daily picks", "Priority lounge channels"]}
-                  cta="Get this plan"
-                  ctaStyle="bg-accent-lime rounded-[12px] text-bg-primary font-extrabold"
-                  borderColor="border-accent-lime"
-                  gradient="bg-gradient-to-br from-[#1a2410] to-bg-secondary"
-                />
-              </div>
-
-              <TierCard
-                title="TMT Elite"
-                subtitle="30 days · monthly"
-                tag="All access"
-                tagColor="text-text-secondary"
-                price="₵500"
-                period="/month"
-                features={["Fixed + Confirmed, all month", "Best value for regulars"]}
-                cta="Subscribe"
-                ctaStyle="border border-white/16 rounded-[12px] text-text-primary font-extrabold"
-                borderColor="border-border-subtle"
-              />
-
-              <TierCard
-                title="Correct Score Vault"
-                subtitle="30 days · monthly"
-                tag="Correct score · premium"
-                tagColor="text-accent-gold"
-                price="₵1000"
-                period="/month"
-                features={["Everything, plus correct-score vault", "Highest-odds picks (9.00+)"]}
-                cta="Subscribe"
-                ctaStyle="bg-accent-gold rounded-[12px] text-bg-primary font-extrabold"
-                borderColor="border-border-gold"
-              />
+              {PLANS.map((plan) => {
+                const style = PLAN_STYLE[plan.id];
+                const isCurrent = profile?.plan === plan.id && isPlanActive(profile?.plan, profile?.planExpiresAt);
+                return (
+                  <div key={plan.id} className={plan.mostPopular ? "relative" : ""}>
+                    {plan.mostPopular && (
+                      <div className="absolute -top-2.5 left-4 bg-accent-lime rounded-[6px] px-2 py-0.5 font-archivo font-extrabold text-[9px] tracking-wider uppercase text-bg-primary z-10">
+                        Most popular
+                      </div>
+                    )}
+                    <TierCard
+                      plan={plan}
+                      style={style}
+                      isCurrent={isCurrent}
+                      loading={checkoutLoading}
+                      onClick={() => (profile ? startCheckout(plan.id) : setShowAuth(true))}
+                    />
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}
@@ -585,111 +593,71 @@ export default function AppShell() {
                   </div>
                   <div>
                     <div className="font-anton text-[18px] text-text-primary tracking-wider uppercase">TMT VIP LOUNGE</div>
-                    <div className="flex items-center gap-2 mt-0.5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-accent-green" />
-                      <span className="font-archivo font-semibold text-[11px] text-text-secondary">214 online</span>
-                    </div>
                   </div>
                 </div>
                 <Users size={23} className="text-text-secondary" />
               </div>
               {/* Channel pills */}
               <div className="flex gap-1.5 mt-4 overflow-x-auto scrollbar-hide">
-                <div className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-[9px] bg-accent-lime font-archivo font-extrabold text-[11px] text-bg-primary">
-                  <Hash size={11} />
-                  fixed-vip
-                </div>
-                <div className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-[9px] bg-bg-secondary border border-border-subtle font-archivo font-bold text-[11px] text-text-secondary">
-                  <Megaphone size={11} />
-                  announcements
-                </div>
-                <div className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-[9px] bg-bg-secondary border border-border-subtle font-archivo font-bold text-[11px] text-text-secondary">
-                  <Hash size={11} />
-                  general
-                </div>
-                <div className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-[9px] bg-bg-secondary font-archivo font-bold text-[11px] text-text-muted">
-                  <Lock size={11} className="text-accent-gold" />
-                  correct-score
-                </div>
+                {CHANNELS.map((c) => {
+                  const active = activeChannel === c.id;
+                  return (
+                    <button
+                      key={c.id}
+                      onClick={() => setActiveChannel(c.id)}
+                      className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-[9px] font-archivo font-extrabold text-[11px] ${active ? "bg-accent-lime text-bg-primary" : "bg-bg-secondary border border-border-subtle text-text-secondary"}`}
+                    >
+                      {c.locked ? <Lock size={11} className={active ? "" : "text-accent-gold"} /> : <Hash size={11} />}
+                      {c.label}
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
             {/* Chat scroll */}
             <div className="flex-1 overflow-y-auto scrollbar-hide px-4 pt-4">
-              {/* Admin pinned */}
-              <div className="bg-[rgba(204,255,51,0.07)] border border-border-lime rounded-[13px] p-3 mb-5 flex gap-2">
-                <Pin size={14} className="text-accent-lime mt-0.5 flex-shrink-0" />
-                <div>
-                  <div className="font-archivo font-extrabold text-[11px] text-accent-lime mb-1">Pinned by admin</div>
-                  <div className="font-archivo font-medium text-[12px] text-text-secondary leading-snug">Today's fixed slip drops at 12:00 GMT. Stake responsibly — 1-2 units max.</div>
+              {chatLoading ? (
+                <div className="text-center py-8"><span className="font-archivo text-[12px] text-text-muted">Loading messages…</span></div>
+              ) : chatLocked ? (
+                <div className="text-center py-10">
+                  <Lock size={22} className="text-accent-gold mx-auto mb-3" />
+                  <p className="font-archivo font-semibold text-[13px] text-text-secondary mb-3">This channel is part of a higher tier.</p>
+                  <button onClick={() => setTab("vip")} className="font-archivo font-bold text-[12px] text-accent-lime">See VIP packages →</button>
                 </div>
-              </div>
-
-              {/* Admin message */}
-              <div className="flex gap-3 mb-5">
-                <div className="w-9 h-9 rounded-[11px] bg-accent-lime flex items-center justify-center flex-shrink-0 font-archivo font-extrabold text-[14px] text-bg-primary">T</div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1.5">
-                    <span className="font-archivo font-extrabold text-[13px] text-text-primary">TMT Admin</span>
-                    <span className="font-archivo font-extrabold text-[8px] tracking-widest uppercase px-1.5 py-0.5 rounded-[5px] bg-accent-lime text-bg-primary">Admin</span>
-                    <span className="font-mono text-[10px] text-text-muted">11:58</span>
-                  </div>
-                  <div className="font-archivo font-medium text-[13px] text-text-secondary mb-3 leading-snug">Fixed slip is in 🔒 Here's today's confirmed line — full board on the Slips tab.</div>
-                  {/* Embedded slip */}
-                  <div className="mt-3 bg-bg-secondary border border-border-cyan rounded-[12px] p-3">
-                    <div className="flex items-center justify-between mb-1.5">
-                      <span className="font-archivo font-bold text-[10px] text-text-secondary">UCL · Mon 19:00</span>
-                      <span className="font-archivo font-extrabold text-[8px] tracking-widest uppercase px-1.5 py-0.5 rounded-[5px] bg-[rgba(87,217,255,0.14)] text-accent-cyan">Confirmed</span>
-                    </div>
-                    <div className="font-archivo font-extrabold text-[14px] text-text-primary mb-2">Inter vs PSG</div>
-                    <div className="flex items-center justify-between">
-                      <span className="font-archivo font-bold text-[12px] text-accent-cyan">BTTS · Yes</span>
-                      <span className="font-mono font-extrabold text-[16px] text-text-primary">1.72</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Member messages */}
-              <ChatMessage
-                avatar="K"
-                avatarColor="bg-[#1f2937] text-accent-cyan"
-                name="Kwame_GH"
-                time="12:01"
-                text="Bagged the Inter line last week 🙌 staying disciplined this time"
-              />
-              <ChatMessage
-                avatar="A"
-                avatarColor="bg-[#1f2937] text-accent-gold"
-                name="Ama_Accra"
-                time="12:03"
-                text="Is correct-score channel unlocking for Elite this week?"
-              />
-
-              {/* Admin note */}
-              <div className="flex items-center gap-2 justify-center my-2">
-                <div className="flex-1 h-px bg-border-subtle" />
-                <span className="font-archivo font-semibold text-[10px] text-text-muted">Admin created #correct-score · 12:04</span>
-                <div className="flex-1 h-px bg-border-subtle" />
-              </div>
+              ) : chatMessages.length === 0 ? (
+                <div className="text-center py-10"><span className="font-archivo text-[12px] text-text-muted">No messages yet — be the first to say something.</span></div>
+              ) : (
+                chatMessages.map((m) => <ChatMessage key={m.id} message={m} />)
+              )}
             </div>
 
             {/* Composer */}
             <div className="flex-shrink-0 px-4 pb-3 pt-2.5 border-t border-border-subtle">
-              <div className="flex items-center gap-2.5 bg-bg-secondary border border-white/10 rounded-[14px] px-4 py-2.5">
-                <PlusCircle size={21} className="text-text-muted" />
-                <span className="flex-1 font-archivo font-medium text-[13px] text-text-muted">Message #fixed-vip</span>
-                <div className="w-8 h-8 rounded-[9px] bg-accent-lime flex items-center justify-center">
-                  <Send size={15} className="text-bg-primary" />
+              {chatError && <p className="text-accent-red text-[11px] font-archivo mb-1.5 px-1">{chatError}</p>}
+              {!profile ? (
+                <button onClick={() => setShowAuth(true)} className="w-full text-center font-archivo font-bold text-[12px] text-accent-lime py-2">Log in to chat →</button>
+              ) : chatLocked ? null : (
+                <div className="flex items-center gap-2.5 bg-bg-secondary border border-white/10 rounded-[14px] px-4 py-2.5">
+                  <input
+                    value={chatText}
+                    onChange={(e) => setChatText(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter") handleSend(); }}
+                    placeholder={`Message #${activeChannel}`}
+                    className="flex-1 bg-transparent font-archivo font-medium text-[13px] text-text-primary outline-none placeholder:text-text-muted"
+                  />
+                  <button onClick={handleSend} className="w-8 h-8 rounded-[9px] bg-accent-lime flex items-center justify-center flex-shrink-0 flex-none">
+                    <Send size={15} className="text-bg-primary" />
+                  </button>
                 </div>
-              </div>
+              )}
             </div>
           </div>
         )}
       </div>
 
       {/* Betslip bar - shown on home/slips tabs */}
-      {(tab === "home" || tab === "slips") && (
+      {(tab === "home" || tab === "slips") && slipItems.length > 0 && (
         <div className="flex-shrink-0 mx-4 mb-2 bg-accent-lime rounded-[15px] p-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-6 h-6 rounded-[7px] bg-bg-primary flex items-center justify-center font-mono font-extrabold text-[12px] text-accent-lime">
@@ -708,7 +676,7 @@ export default function AppShell() {
       <div className="flex-shrink-0 flex items-center justify-around px-2 pb-3 pt-2 bg-[rgba(11,12,15,0.92)] backdrop-blur-lg border-t border-border-subtle z-20 safe-bottom">
         {NAV_ITEMS.map((item) => {
           const isActive = tab === item.id;
-          const Icon = isActive ? item.activeIcon : item.icon;
+          const Icon = item.icon;
           return (
             <button
               key={item.id}

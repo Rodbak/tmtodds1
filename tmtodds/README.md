@@ -1,36 +1,50 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# TMTODDS
 
-## Getting Started
+A sports-picks subscription app for Ghana: a free daily pick, a paid
+board of analysis across a few tiers, a results ledger, and a members'
+lounge — built with Next.js (App Router), Supabase (auth + Postgres),
+and Paystack (payments).
 
-First, run the development server:
+## Stack
+
+- **Next.js 16 / React 19 / TypeScript**, Tailwind v4 for styling
+- **Supabase** — auth, Postgres, row-level security (`supabase/schema.sql`)
+- **Paystack** — checkout + webhook-driven plan activation
+- Route Handlers under `src/app/api/*` are the only thing that talk to
+  the database directly (via the service-role key) or to Paystack; the
+  browser only ever calls these routes, never Supabase or Paystack
+  straight from the client for anything sensitive.
+
+## Getting started
+
+See **[SETUP.md](./SETUP.md)** — nothing runs until you've created a
+Supabase project, run the schema, and added a Paystack account. That
+file walks through both, plus deploying to Vercel.
 
 ```bash
+npm install
+cp .env.local.example .env.local   # fill in the values from SETUP.md
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Project layout
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```
+src/app/            Pages (App Router) — page.tsx is the whole
+                     mobile-shell UI, tab-switched client-side
+src/app/admin/       Posting and settling picks (admin-only, gated
+                     server-side in admin/layout.tsx)
+src/app/api/         Route Handlers: picks, chat, Paystack
+src/app/store/       React context + provider wiring the UI to /api
+src/lib/             Supabase clients, plan definitions, Paystack
+                     helpers, shared types
+supabase/schema.sql  Full DB schema + RLS policies
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## A note on honesty in the product copy
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Picks are labeled as analysis/predictions, not as "fixed" or
+guaranteed outcomes, and every stat shown in the app (win rate, streak,
+picks posted) is computed live from the `picks` table rather than
+hardcoded — there's nothing to keep in sync by hand, and nothing shown
+to a subscriber is invented.
