@@ -73,11 +73,24 @@ one-person operation right now. After signing up:
 
 ## 7. Deploy
 
-`vercel.json` already points at the `tmtodds` folder as the root
-directory, so connecting the repo to Vercel should just work. Add the
-same environment variables from `.env.local` in the Vercel project
-settings, then update the Paystack webhook URL and
-`NEXT_PUBLIC_SITE_URL` to your real domain once you have one.
+The app lives in the `tmtodds` subfolder, not the repo root, so Vercel
+needs to be told that explicitly — there's no `vercel.json` for this
+(`rootDirectory` isn't a real `vercel.json` property, which is why you
+may have seen a schema-validation error if one was set that way
+before). Instead, after importing the repo:
+
+1. Vercel Dashboard → your project → **Settings → Build and
+   Deployment**.
+2. Find **Root Directory**, set it to `tmtodds`, save.
+3. **Settings → Environment Variables** — add every value from your
+   `.env.local` here too. `.env.local` is git-ignored on purpose, so
+   Vercel never sees those values unless you add them in the
+   dashboard directly.
+4. Redeploy. Vercel auto-detects Next.js once Root Directory is
+   correct — no other config needed.
+
+Once you have a real domain, update the Paystack webhook URL and
+`NEXT_PUBLIC_SITE_URL` (as an env var in the dashboard) to match it.
 
 ## What's intentionally simple in this version
 
