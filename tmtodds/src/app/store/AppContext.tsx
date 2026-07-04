@@ -11,6 +11,8 @@ export type SlipItem = {
 
 export type AuthResult = { ok: boolean; error?: string; message?: string };
 
+export type LedgerFilter = "all" | "won" | "lost" | "pending";
+
 export type AppState = {
   tab: Tab;
   setTab: (t: Tab) => void;
@@ -21,17 +23,25 @@ export type AppState = {
   login: (email: string, password: string) => Promise<AuthResult>;
   register: (name: string, email: string, password: string) => Promise<AuthResult>;
   logout: () => Promise<void>;
+  forgotPassword: (email: string) => Promise<AuthResult>;
+  passwordResetSent: boolean;
 
   // Today's board
   todayPicks: PickDTO[];
   picksLoading: boolean;
   toggleSlip: (id: string) => void;
   slipItems: SlipItem[];
+  leagueFilter: string;
+  setLeagueFilter: (filter: string) => void;
+  filteredTodayPicks: PickDTO[];
 
   // Proof & results
   ledger: PickDTO[];
   stats: LedgerStats | null;
   ledgerLoading: boolean;
+  ledgerFilter: LedgerFilter;
+  setLedgerFilter: (filter: LedgerFilter) => void;
+  filteredLedger: PickDTO[];
 
   // Chat
   chatMessages: ChatMessageDTO[];
@@ -40,6 +50,7 @@ export type AppState = {
   activeChannel: string;
   setActiveChannel: (c: string) => void;
   sendMessage: (text: string) => Promise<AuthResult>;
+  pinnedMessage: ChatMessageDTO | null;
 
   // Billing
   startCheckout: (planId: PlanId) => Promise<void>;

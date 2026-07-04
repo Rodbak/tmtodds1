@@ -2,7 +2,7 @@
 
 import { useCallback, useContext, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { AppContext as Ctx, type Tab, type SlipItem, type AuthResult } from "./AppContext";
+import { AppContext as Ctx, type Tab, type SlipItem, type AuthResult, type LedgerFilter } from "./AppContext";
 import type { PickDTO, ChatMessageDTO, LedgerStats, Profile } from "@/lib/types";
 import type { PlanId } from "@/lib/plans";
 
@@ -30,6 +30,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [chatLocked, setChatLocked] = useState(false);
   const [chatLoading, setChatLoading] = useState(true);
   const [activeChannel, setActiveChannel] = useState("general");
+  const [pinnedMessage, setPinnedMessage] = useState<ChatMessageDTO | null>(null);
+
+  // Filters
+  const [ledgerFilter, setLedgerFilter] = useState<LedgerFilter>("all");
+  const [leagueFilter, setLeagueFilter] = useState("all");
+  const [passwordResetSent, setPasswordResetSent] = useState(false);
 
   // Billing
   const [checkoutLoading, setCheckoutLoading] = useState(false);
@@ -88,6 +94,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const json = await res.json();
       setChatLocked(!!json.locked);
       setChatMessages(json.items ?? []);
+
+      const pinnedRes = await fetch(`/api/chat/pinned?channel=${encodeURIComponent(channel)}`);
+      const pinnedJson = await pinnedRes.json();
+      setPinnedMessage(pinnedJson.item ?? null);
     } finally {
       setChatLoading(false);
     }
@@ -140,6 +150,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     .filter((p) => slipIds.has(p.id) && p.odds !== null)
     .map((p) => ({ pickId: p.id, odds: p.odds as number }));
 
+  const filteredTodayPicks = leagueFilter === "all"
+    ? todayPicks
+    : todayPicks.filter((p) => p.league === leagueFilter);
+
+  const filteredLedger = ledgerFilter === "all"
+    ? ledger
+    : ledger.filter((p) => p.status === ledgerFilter);
+
   const login = async (email: string, password: string): Promise<AuthResult> => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) return { ok: false, error: error.message };
@@ -152,6 +170,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     if (!data.session) {
       return { ok: true, message: "Check your email to confirm your account, then log in." };
     }
+    return { ok: true };
+  };
+
+  const forgotPassword = async (email: string): Promise<AuthResult> => {
+    const { error } = await supabase.auth.resetPasswordForEmail(email);
+    if (error) return { ok: false, error: error.message };
+    setPasswordResetSent(true);
     return { ok: true };
   };
 
@@ -204,19 +229,28 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     login,
     register,
     logout,
+    forgotPassword,
+    passwordResetSent,
     todayPicks,
     picksLoading,
     toggleSlip,
     slipItems,
+    leagueFilter,
+    setLeagueFilter,
+    filteredTodayPicks,
     ledger,
     stats,
     ledgerLoading,
+    ledgerFilter,
+    setLedgerFilter,
+    filteredLedger,
     chatMessages,
     chatLocked,
     chatLoading,
     activeChannel,
     setActiveChannel,
     sendMessage,
+    pinnedMessage,
     startCheckout,
     checkoutLoading,
     checkoutError,

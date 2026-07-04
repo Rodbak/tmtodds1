@@ -13,6 +13,7 @@ const CHANNEL_ACCESS: Record<string, Tier> = {
   announcements: "free",
   general: "weekly",
   correct_score: "correct_score",
+  "fixed-vip": "correct_score",
 };
 
 function effectivePlanFor(profile: Awaited<ReturnType<typeof getSessionProfile>>["profile"]) {
@@ -20,6 +21,27 @@ function effectivePlanFor(profile: Awaited<ReturnType<typeof getSessionProfile>>
 }
 
 export async function GET(request: NextRequest) {
+  const pinned = request.nextUrl.searchParams.get("pinned") === "true";
+  
+  if (pinned) {
+    const channel = request.nextUrl.searchParams.get("channel");
+    if (!channel) return NextResponse.json({ error: "channel required for pinned=true" }, { status: 400 });
+    
+    const { profile } = await getSessionProfile();
+    if (!profile || profile.role !== "admin") {
+      return NextResponse.json({ error: "Admin only" }, { status: 403 });
+    }
+    
+    return NextResponse.json({ 
+      pinned: { 
+        authorName: "TMT Admin", 
+        body: "Today's fixed slip drops at 12:00 GMT. Stake responsibly — 1-2 units max.", 
+        createdAt: new Date().toISOString(), 
+        isAdmin: true 
+      } 
+    });
+  }
+
   const channel = request.nextUrl.searchParams.get("channel") ?? "general";
   const requiredTier = CHANNEL_ACCESS[channel];
   if (!requiredTier) return NextResponse.json({ error: "Unknown channel" }, { status: 400 });
@@ -53,6 +75,34 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const pinned = request.nextUrl.searchParams.get("pinned") === "true";
+  
+  if (pinned) {
+    const { profile } = await getSessionProfile();
+    if (!profile || profile.role !== "admin") {
+      return NextResponse.json({ error: "Admin only" }, { status: 403 });
+    }
+    
+    const body = await request.json().catch(() => null);
+    const channel = body?.channel;
+    const messageBody = (body?.body ?? "").trim();
+    
+    if (!channel || !messageBody) {
+      return NextResponse.json({ error: "channel and body required" }, { status: 400 });
+    }
+    
+    return NextResponse.json({ 
+      success: true, 
+      pinned: { 
+        channel, 
+        authorName: "TMT Admin", 
+        body: messageBody, 
+        createdAt: new Date().toISOString(), 
+        isAdmin: true 
+      } 
+    }, { status: 201 });
+  }
+
   const { userId, profile } = await getSessionProfile();
   if (!userId || !profile) return NextResponse.json({ error: "Sign in required" }, { status: 401 });
 

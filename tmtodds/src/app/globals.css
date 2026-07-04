@@ -62,3 +62,10 @@
 .animate-pulse-live {
   animation: pulse-live 1.4s infinite;
 }
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+.animate-[slideUp_200ms_ease] {
+  animation: slideUp 200ms ease-out;
+}
