@@ -1,0 +1,71 @@
+# TMTODDS
+
+A sports-picks subscription app for Ghana: a free daily pick, a paid
+board of analysis across a few tiers, a results ledger with pending
+picks tracked openly, and a members' lounge — built with Next.js (App
+Router), Supabase (auth + Postgres), and Paystack (payments).
+
+## Stack
+
+- **Next.js 16 / React 19 / TypeScript**, Tailwind v4 for styling
+- **Supabase** — auth, Postgres, row-level security (`supabase/schema.sql`)
+- **Paystack** — checkout + webhook-driven plan activation
+- Route Handlers under `src/app/api/*` are the only thing that talk to
+  the database directly (via the service-role key) or to Paystack; the
+  browser only ever calls these routes, never Supabase or Paystack
+  straight from the client for anything sensitive.
+
+## Getting started
+
+See **[SETUP.md](./SETUP.md)** — nothing runs until you've created a
+Supabase project, run the schema, and added a Paystack account. That
+file walks through both, plus deploying.
+
+```bash
+npm install
+cp .env.local.example .env.local   # fill in the values from SETUP.md
+npm run dev
+```
+
+## Project layout
+
+```
+src/app/             Root layout + the phone-shell page (composes the
+                     tab components below), tab-switched client-side
+src/components/      Home / Slips / Proof / VIP / Chat tab components,
+                     the auth modal, bottom nav, and shared pick/ledger/
+                     chat-bubble UI pieces
+src/app/admin/       Posting and settling picks (admin-only, gated
+                     server-side in admin/layout.tsx)
+src/app/api/         Route Handlers: picks, chat, Paystack
+src/app/store/       React context + provider wiring the UI to /api
+src/lib/             Supabase clients, plan definitions, Paystack
+                     helpers, shared types, date formatting
+supabase/schema.sql  Full DB schema + RLS policies
+```
+
+## A note on honesty in the product copy
+
+Picks are labeled as analysis/predictions, not as guaranteed outcomes,
+and every stat shown in the app (win rate, streak, picks posted) is
+computed live from the `picks` table rather than hardcoded — there's
+nothing to keep in sync by hand, and nothing shown to a subscriber is
+invented.
+
+This is also why the paid tiers are branded **"Locked"** rather than
+"Fixed": in this market "fixed match" specifically implies a
+pre-arranged result, which is both untrue of an analysis product and
+the exact language used by match-fixing scam channels. "Locked" keeps
+the same confident, vault-like feel — it pairs with the padlock/unlock
+iconography used throughout the board and ledger — without making that
+claim. If you change tier names or chat copy later, keep this in mind;
+`src/lib/plans.ts` has the longer version of this note.
+
+## Payments and database are not wired to live credentials
+
+This build ships with the full Supabase + Paystack integration code
+(schema, RLS, Route Handlers, webhook signature verification), but
+`.env.local.example` only has placeholder values — see SETUP.md to
+create your own Supabase project and Paystack account and plug in the
+real keys. Until then, `npm run dev` will start, but sign-up, checkout,
+and anything reading/writing the database will fail.

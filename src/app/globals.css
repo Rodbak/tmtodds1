@@ -1,0 +1,96 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-bg-primary: #0b0c0f;
+  --color-bg-secondary: #14171d;
+  --color-accent-lime: #ccff33;
+  --color-accent-cyan: #57d9ff;
+  --color-accent-gold: #f5c451;
+  --color-accent-green: #34e08a;
+  --color-accent-red: #ff4d4d;
+  --color-text-primary: #f2f4f7;
+  --color-text-secondary: #9aa3b2;
+  --color-text-muted: #5b636f;
+  --color-border-subtle: rgba(255, 255, 255, 0.07);
+  --color-border-lime: rgba(204, 255, 51, 0.22);
+  --color-border-cyan: rgba(87, 217, 255, 0.22);
+  --color-border-gold: rgba(245, 196, 81, 0.28);
+  --font-anton: var(--font-anton);
+  --font-archivo: var(--font-archivo);
+  --font-mono: var(--font-mono);
+}
+
+@layer base {
+  * {
+    box-sizing: border-box;
+    -webkit-font-smoothing: antialiased;
+  }
+  body {
+    margin: 0;
+    background: #0b0c0f;
+    color: #f2f4f7;
+    font-family: var(--font-archivo), sans-serif;
+  }
+  :focus-visible {
+    outline: 2px solid #ccff33;
+    outline-offset: 2px;
+  }
+}
+
+@layer utilities {
+  .text-gradient-lime {
+    background: linear-gradient(135deg, #ccff33, #a8e02e);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 16px);
+  }
+  .phone-shell {
+    width: 100%;
+    max-width: 414px;
+    margin: 0 auto;
+    min-height: 100dvh;
+    position: relative;
+    background: #0b0c0f;
+    overflow: hidden;
+  }
+  @media (min-width: 640px) {
+    .phone-shell {
+      border-left: 1px solid rgba(255, 255, 255, 0.05);
+      border-right: 1px solid rgba(255, 255, 255, 0.05);
+    }
+  }
+  .h-px {
+    height: 1px;
+  }
+}
+
+@keyframes pulse-live {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.4;
+    transform: scale(0.85);
+  }
+}
+.animate-pulse-live {
+  animation: pulse-live 1.4s infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-pulse-live {
+    animation: none;
+  }
+}
