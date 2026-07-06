@@ -2,95 +2,126 @@ import crypto from "node:crypto";
 import { createAdminClient } from "@/lib/supabase/server";
 import { getPlan, type PlanId } from "@/lib/plans";
 
-const PAYSTACK_BASE = "https://api.paystack.co";
+const PAYSTACK_API = "https://api.paystack.co";
 
-async function paystackFetch(path: string, init: RequestInit = {}) {
-  const res = await fetch(`${PAYSTACK_BASE}${path}`, {
-    ...init,
+export class PaystackError extends Error {
+  constructor(message: string, readonly httpStatus: number) {
+    super(message);
+    this.name = "PaystackError";
+  }
+}
+
+async function callPaystack<T = Record<string, unknown>>(
+  path: string,
+  options?: { method?: "GET" | "POST"; body?: Record<string, unknown> }
+): Promise<{ status: boolean; message: string; data: T }> {
+  const res = await fetch(`${PAYSTACK_API}${path}`, {
+    method: options?.method ?? "GET",
     headers: {
       Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
       "Content-Type": "application/json",
-      ...init.headers,
     },
+    body: options?.body ? JSON.stringify(options.body) : undefined,
   });
-  const json = await res.json();
-  if (!res.ok || json.status === false) {
-    throw new Error(json.message ?? `Paystack request failed (${res.status})`);
+
+  const payload = await res.json();
+  if (!res.ok || payload?.status === false) {
+    throw new PaystackError(payload?.message ?? `Paystack returned HTTP ${res.status}`, res.status);
   }
-  return json;
+  return payload;
 }
 
-export async function initializeTransaction(params: {
+type InitializePayload = {
+  authorization_url: string;
+  access_code: string;
+  reference: string;
+};
+
+export function initializeTransaction(params: {
   email: string;
   amountPesewas: number;
   reference: string;
   callbackUrl: string;
   metadata: Record<string, unknown>;
 }) {
-  return paystackFetch("/transaction/initialize", {
+  return callPaystack<InitializePayload>("/transaction/initialize", {
     method: "POST",
-    body: JSON.stringify({
+    body: {
       email: params.email,
       amount: params.amountPesewas,
       currency: "GHS",
       reference: params.reference,
       callback_url: params.callbackUrl,
       metadata: params.metadata,
-    }),
+    },
   });
 }
 
-export async function verifyTransaction(reference: string) {
-  return paystackFetch(`/transaction/verify/${encodeURIComponent(reference)}`);
-}
+type VerifyPayload = {
+  reference: string;
+  status: "success" | "failed" | "abandoned" | string;
+  amount: number;
+  metadata?: { planId?: string; userId?: string };
+};
 
-/** Confirms the `x-paystack-signature` header on an incoming webhook body. */
-export function verifyWebhookSignature(rawBody: string, signatureHeader: string | null): boolean {
-  if (!signatureHeader) return false;
-  const expected = crypto
-    .createHmac("sha512", process.env.PAYSTACK_SECRET_KEY!)
-    .update(rawBody)
-    .digest("hex");
-  return expected === signatureHeader;
+export function verifyTransaction(reference: string) {
+  return callPaystack<VerifyPayload>(`/transaction/verify/${encodeURIComponent(reference)}`);
 }
 
 /**
- * Activates a subscription from a successful Paystack transaction.
- * Idempotent: safe to call from both the webhook and the callback-page
- * verify route without double-extending a plan, since it checks the
- * payment record's status before doing anything.
+ * Confirms the `x-paystack-signature` header on an incoming webhook
+ * body -- a timing-safe compare so a slow string equality check can't
+ * leak information about how many leading bytes matched.
  */
-export async function activateFromTransaction(data: {
+export function verifyWebhookSignature(rawBody: string, signatureHeader: string | null): boolean {
+  if (!signatureHeader) return false;
+
+  const expected = crypto.createHmac("sha512", process.env.PAYSTACK_SECRET_KEY!).update(rawBody).digest("hex");
+
+  const expectedBuf = Buffer.from(expected, "hex");
+  const receivedBuf = Buffer.from(signatureHeader, "hex");
+  if (expectedBuf.length !== receivedBuf.length) return false;
+  return crypto.timingSafeEqual(expectedBuf, receivedBuf);
+}
+
+type ActivationOutcome =
+  | { activated: true; planId: PlanId; expiresAt: string }
+  | { activated: false; reason: "unknown reference" | "already processed" | "transaction not successful" | "unknown plan" };
+
+/**
+ * Activates a subscription from a successful Paystack transaction.
+ * Both the webhook and the /vip/callback verify route call this, often
+ * for the same reference -- it's written to be safe either way: the
+ * `payment.status === "success"` guard means a second call is a no-op
+ * rather than a double-extended plan.
+ */
+export async function activateFromTransaction(transaction: {
   reference: string;
   amount: number;
   status: string;
   metadata?: { planId?: string; userId?: string };
-}) {
-  const supabase = createAdminClient();
+}): Promise<ActivationOutcome> {
+  const db = createAdminClient();
 
-  const { data: payment } = await supabase
-    .from("payments")
-    .select("*")
-    .eq("reference", data.reference)
-    .single();
-
+  const { data: payment } = await db.from("payments").select("*").eq("reference", transaction.reference).single();
   if (!payment) return { activated: false, reason: "unknown reference" };
   if (payment.status === "success") return { activated: false, reason: "already processed" };
-  if (data.status !== "success") {
-    await supabase.from("payments").update({ status: "failed", raw_payload: data }).eq("reference", data.reference);
+
+  if (transaction.status !== "success") {
+    await db.from("payments").update({ status: "failed", raw_payload: transaction }).eq("reference", transaction.reference);
     return { activated: false, reason: "transaction not successful" };
   }
 
-  const planId = payment.plan as PlanId;
-  const plan = getPlan(planId);
+  const plan = getPlan(payment.plan as PlanId);
   if (!plan) return { activated: false, reason: "unknown plan" };
 
-  const expiresAt = new Date(Date.now() + plan.periodDays * 24 * 60 * 60 * 1000).toISOString();
+  const msPerDay = 24 * 60 * 60 * 1000;
+  const expiresAt = new Date(Date.now() + plan.periodDays * msPerDay).toISOString();
 
   await Promise.all([
-    supabase.from("payments").update({ status: "success", raw_payload: data }).eq("reference", data.reference),
-    supabase.from("profiles").update({ plan: planId, plan_expires_at: expiresAt }).eq("id", payment.user_id),
+    db.from("payments").update({ status: "success", raw_payload: transaction }).eq("reference", transaction.reference),
+    db.from("profiles").update({ plan: plan.id, plan_expires_at: expiresAt }).eq("id", payment.user_id),
   ]);
 
-  return { activated: true, planId, expiresAt };
+  return { activated: true, planId: plan.id, expiresAt };
 }

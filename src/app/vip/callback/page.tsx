@@ -6,11 +6,26 @@ import { useApp } from "@/app/store/AppProvider";
 
 export const dynamic = "force-dynamic";
 
+type CallbackStatus = "checking" | "success" | "failed";
+
+const COPY: Record<Exclude<CallbackStatus, "checking">, { heading: string; headingColor: string; body: string }> = {
+  success: {
+    heading: "You're in",
+    headingColor: "text-accent-lime",
+    body: "Your plan is active. Head back to unlock the full board.",
+  },
+  failed: {
+    heading: "Payment not confirmed",
+    headingColor: "text-accent-red",
+    body: "If money left your account, it can take a minute to confirm — check the VIP tab shortly, or reach out if it still hasn't updated.",
+  },
+};
+
 function CallbackInner() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { refreshAll } = useApp();
-  const [status, setStatus] = useState<"checking" | "success" | "failed">("checking");
+  const [status, setStatus] = useState<CallbackStatus>("checking");
 
   useEffect(() => {
     const reference = searchParams.get("reference");
@@ -19,34 +34,38 @@ function CallbackInner() {
       setStatus("failed");
       return;
     }
-    fetch(`/api/paystack/verify?reference=${encodeURIComponent(reference)}`)
-      .then((res) => res.json())
-      .then((json) => {
+
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const res = await fetch(`/api/paystack/verify?reference=${encodeURIComponent(reference)}`);
+        const json = await res.json();
+        if (cancelled) return;
         if (json.status === "success") {
           setStatus("success");
           refreshAll();
         } else {
           setStatus("failed");
         }
-      })
-      .catch(() => setStatus("failed"));
+      } catch {
+        if (!cancelled) setStatus("failed");
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, [searchParams, refreshAll]);
 
   return (
     <div className="max-w-sm w-full text-center">
-      {status === "checking" && <p className="text-[14px] text-text-secondary font-archivo">Confirming your payment…</p>}
-      {status === "success" && (
+      {status === "checking" ? (
+        <p className="text-[14px] text-text-secondary font-archivo mb-6">Confirming your payment…</p>
+      ) : (
         <>
-          <p className="font-archivo font-extrabold text-[18px] text-accent-lime mb-2">You&apos;re in</p>
-          <p className="text-[13px] text-text-secondary font-archivo mb-6">Your plan is active. Head back to unlock the full board.</p>
-        </>
-      )}
-      {status === "failed" && (
-        <>
-          <p className="font-archivo font-extrabold text-[18px] text-accent-red mb-2">Payment not confirmed</p>
-          <p className="text-[13px] text-text-secondary font-archivo mb-6">
-            If money left your account, it can take a minute to confirm — check the VIP tab shortly, or reach out if it still hasn&apos;t updated.
-          </p>
+          <p className={`font-archivo font-extrabold text-[18px] mb-2 ${COPY[status].headingColor}`}>{COPY[status].heading}</p>
+          <p className="text-[13px] text-text-secondary font-archivo mb-6">{COPY[status].body}</p>
         </>
       )}
       <button

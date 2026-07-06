@@ -1,16 +1,13 @@
 import { redirect } from "next/navigation";
-import { getSessionProfile } from "@/lib/session";
+import { requireAdmin } from "@/lib/session";
 
+// Every /admin/* route is covered by this one server-side check --
+// there's no client-side "if admin" branch to accidentally get wrong
+// on a page added later, since a non-admin never gets HTML for any
+// page under here in the first place.
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  const { profile } = await getSessionProfile();
+  const access = await requireAdmin();
+  if (!access.ok) redirect("/");
 
-  if (!profile || profile.role !== "admin") {
-    redirect("/");
-  }
-
-  return (
-    <div className="min-h-dvh bg-bg-primary text-text-primary font-archivo">
-      {children}
-    </div>
-  );
+  return <div className="min-h-dvh bg-bg-primary text-text-primary font-archivo">{children}</div>;
 }
