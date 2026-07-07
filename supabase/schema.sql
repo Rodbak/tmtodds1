@@ -120,6 +120,55 @@ create table if not exists payments (
 );
 
 -- ─────────────────────────────────────────────────────────────
+-- rate_limits — a minimal sliding-window counter so chat posting
+-- and checkout-initiation can't be scripted/flooded. Deliberately
+-- simple (one row per key, reset when the window elapses) rather
+-- than a full token-bucket implementation -- good enough for a
+-- launch, swap in Vercel's Firewall or Upstash if traffic grows
+-- past what a single Postgres row can arbitrate cleanly.
+-- ─────────────────────────────────────────────────────────────
+create table if not exists rate_limits (
+  key text primary key,
+  count int not null default 1,
+  window_start timestamptz not null default now()
+);
+
+create or replace function check_rate_limit(p_key text, p_max_requests int, p_window_seconds int)
+returns boolean
+language plpgsql
+security definer set search_path = public
+as $$
+declare
+  v_count int;
+begin
+  insert into rate_limits (key, count, window_start)
+  values (p_key, 1, now())
+  on conflict (key) do update
+    set count = case
+          when rate_limits.window_start < now() - (p_window_seconds || ' seconds')::interval
+            then 1
+          else rate_limits.count + 1
+        end,
+        window_start = case
+          when rate_limits.window_start < now() - (p_window_seconds || ' seconds')::interval
+            then now()
+          else rate_limits.window_start
+        end
+  returning count into v_count;
+
+  return v_count <= p_max_requests;
+end;
+$$;
+
+alter table rate_limits enable row level security;
+
+drop policy if exists "no direct rate_limits access" on rate_limits;
+create policy "no direct rate_limits access" on rate_limits
+  for select using (false);
+  -- Only touched via the check_rate_limit() function (security
+  -- definer) called from Route Handlers using the service role.
+
+-- ─────────────────────────────────────────────────────────────
 -- Row Level Security
 --
 -- The app's Route Handlers use the Supabase *service role* key to

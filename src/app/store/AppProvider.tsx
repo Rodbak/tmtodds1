@@ -162,6 +162,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     await supabase.auth.signOut();
   };
 
+  const requestPasswordReset = async (email: string): Promise<AuthResult> => {
+    const redirectTo = typeof window !== "undefined" ? `${window.location.origin}/auth/reset-password` : undefined;
+    const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
+    if (error) return { ok: false, error: error.message };
+    return { ok: true, message: "Check your email for a password reset link." };
+  };
+
   const sendMessage = async (text: string, opts?: SendMessageOptions): Promise<AuthResult> => {
     const res = await fetch("/api/chat", {
       method: "POST",
@@ -175,6 +182,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     });
     const json = await res.json().catch(() => ({}));
     if (!res.ok) return { ok: false, error: json.error ?? "Message failed to send" };
+    await fetchChat(activeChannel);
+    return { ok: true };
+  };
+
+  const deleteMessage = async (id: string): Promise<AuthResult> => {
+    const res = await fetch(`/api/chat/${id}`, { method: "DELETE" });
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) return { ok: false, error: json.error ?? "Could not delete message" };
     await fetchChat(activeChannel);
     return { ok: true };
   };
@@ -212,6 +227,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     login,
     register,
     logout,
+    requestPasswordReset,
     todayPicks,
     picksLoading,
     toggleSlip,
@@ -228,6 +244,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     activeChannel,
     setActiveChannel,
     sendMessage,
+    deleteMessage,
     startCheckout,
     checkoutLoading,
     checkoutError,

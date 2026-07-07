@@ -26,6 +26,25 @@ database system" that was intentionally left for you to fill in.
 5. To make yourself an admin (so `/admin` isn't a 404 for everyone):
    sign up once through the running app, then in the SQL Editor run
    `update profiles set role = 'admin' where email = 'you@example.com';`
+6. **Configure custom SMTP before launch — this one is easy to miss.**
+   Supabase's built-in email sender (used for signup confirmation and
+   the "Forgot password?" flow) is capped at **2 messages per hour for
+   the entire project**, and by default refuses to deliver to any
+   address that isn't already a member of your Supabase organization.
+   In practice: without this step, password reset and signup
+   confirmation emails will not reach real subscribers at all, not
+   just slowly. Go to **Authentication → Emails → SMTP Settings**, add
+   credentials from a provider (Resend, Postmark, SendGrid, and AWS SES
+   all work — Resend has the most direct Supabase integration at the
+   time of writing), and the cap moves to 30/hour, adjustable further
+   under **Authentication → Rate Limits**.
+7. **Turn on signup/login abuse protection.** This app's own rate
+   limiting (see below) covers chat and checkout, but signup and login
+   go straight to Supabase Auth, so their abuse protection lives in
+   the dashboard instead: set stricter values under **Authentication →
+   Rate Limits**, and turn on CAPTCHA (hCaptcha or Cloudflare Turnstile)
+   under **Authentication → Attack Protection** if you want a bot
+   deterrent on the signup form itself.
 
 ## 2. Paystack
 
@@ -49,7 +68,17 @@ database system" that was intentionally left for you to fill in.
 5. When you're ready to accept real money, switch `.env.local` to the
    live key pair and repeat step 3 with your live webhook URL.
 
-## 3. Running locally
+## 3. Google Analytics (optional)
+
+1. Create a GA4 property at [analytics.google.com](https://analytics.google.com), add a web data stream for your
+   domain, and copy the **Measurement ID** (starts with `G-`).
+2. Set `NEXT_PUBLIC_GA_MEASUREMENT_ID` in `.env.local`. Leave it blank to run with no analytics at all — nothing
+   else in the app depends on it.
+3. That's it — the app only loads the Google Analytics script after a visitor clicks "Accept" on the consent
+   banner shown on their first visit (see `src/components/Analytics.tsx`); "Decline" means it never loads for
+   them. This is already reflected in the Privacy Policy draft.
+
+## 4. Running locally
 
 ```bash
 npm install
@@ -60,14 +89,41 @@ npm run dev
 Visit `http://localhost:3000`. Sign up, make yourself admin (step 5
 above), then visit `/admin` to post today's first pick.
 
-## 4. Deploying
+## 5. Deploying
 
 Any host that runs Next.js works. On Vercel: import the repo, add the
 same variables from `.env.local` in **Project Settings → Environment
 Variables**, and set `NEXT_PUBLIC_SITE_URL` to your real domain (this
-is used to build the Paystack redirect URL — if it's wrong, checkout
-will send people back to the wrong place). Redeploy after adding a
-webhook URL that points at the deployed domain.
+is used to build the Paystack redirect URL, the sitemap, and the
+Open Graph share image — if it's wrong, all three point at the wrong
+place). Redeploy after adding a webhook URL that points at the
+deployed domain.
+
+## 6. Before you actually launch
+
+A few things ship as drafts on purpose and need your input before real
+users see them:
+
+- **`src/app/legal/terms`, `/privacy`, `/responsible-gambling`** — read
+  every `[bracketed placeholder]` in these three pages. In particular,
+  `/legal/responsible-gambling` deliberately does **not** include a
+  support helpline number — we couldn't verify one is still current, and
+  a wrong number there is worse than none. Check
+  [gamingcommission.gov.gh](https://gamingcommission.gov.gh) and
+  [mha-ghana.com](https://mha-ghana.com) for what's currently correct
+  and add it before this page goes live.
+- **Register as a data controller** with Ghana's Data Protection
+  Commission ([dataprotection.org.gh](https://dataprotection.org.gh))
+  before launch — required under the Data Protection Act, 2012 (Act
+  843), not optional paperwork.
+- **Have a lawyer look at all three legal pages** against your actual
+  business setup (refund policy, company name/address, liability
+  language) — they're a solid starting structure, not a substitute for
+  review.
+- **Run `npm test`** — covers the tier-locking and payment-webhook
+  logic. Should already be passing; re-run after any change to
+  `src/lib/plans.ts` or `src/lib/paystack.ts` specifically, since
+  those are what the tests are watching.
 
 ## What's intentionally simple in this first version
 
@@ -84,3 +140,14 @@ webhook URL that points at the deployed domain.
   before it in that channel) and/or reference one pick, not a list of
   either. Matches what the design calls for; extend
   `chat_messages`/`src/app/api/chat/route.ts` if that needs to grow.
+- **Rate limiting covers chat and checkout**, not signup/login —
+  those still rely on Supabase's own dashboard rate limits
+  (**Authentication → Rate Limits**) and, optionally, CAPTCHA
+  (**Authentication → Attack Protection**). Turn both on before
+  launch; nothing in this codebase throttles them otherwise.
+- **Tests cover the money/access-control logic only**
+  (`npm test`) — tier-locking (`plans.test.ts`) and webhook signature
+  verification (`paystack.test.ts`), the two places a bug would either
+  leak paid content or mis-activate a payment. UI and API-route
+  integration tests aren't included; add them as this grows past the
+  first version.

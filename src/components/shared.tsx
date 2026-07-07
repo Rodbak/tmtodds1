@@ -1,4 +1,4 @@
-import { Check, Plus, Lock } from "lucide-react";
+import { Check, Plus, Lock, Trash2 } from "lucide-react";
 import type { PickDTO, ChatMessageDTO, ChatAttachedPick } from "@/lib/types";
 import type { PlanId } from "@/lib/plans";
 import { PLANS } from "@/lib/plans";
@@ -126,6 +126,8 @@ export function PickCard({ pick, addedToSlip, onToggle }: { pick: PickDTO; added
               </div>
               <button
                 onClick={onToggle}
+                aria-pressed={addedToSlip}
+                aria-label={addedToSlip ? "Remove from slip" : "Add to slip"}
                 className={`w-9 h-9 rounded-[10px] flex items-center justify-center ${addedToSlip ? "bg-accent-gold text-bg-primary" : "bg-accent-lime text-bg-primary"}`}
               >
                 {addedToSlip ? <Check size={17} /> : <Plus size={17} />}
@@ -171,10 +173,18 @@ export function EmbeddedPickCard({ pick }: { pick: ChatAttachedPick }) {
   );
 }
 
-export function ChatMessageBubble({ message }: { message: ChatMessageDTO }) {
+export function ChatMessageBubble({
+  message,
+  canModerate,
+  onDelete,
+}: {
+  message: ChatMessageDTO;
+  canModerate?: boolean;
+  onDelete?: (id: string) => void;
+}) {
   const initial = message.authorName.charAt(0).toUpperCase();
   return (
-    <div className="flex gap-3 mb-5">
+    <div className="group flex gap-3 mb-5">
       <div className={`w-9 h-9 rounded-[11px] flex items-center justify-center flex-shrink-0 font-archivo font-extrabold text-[14px] ${message.isAdmin ? "bg-accent-lime text-bg-primary" : "bg-[#1f2937] text-accent-cyan"}`}>
         {initial}
       </div>
@@ -185,6 +195,16 @@ export function ChatMessageBubble({ message }: { message: ChatMessageDTO }) {
             <span className="font-archivo font-extrabold text-[8px] tracking-widest uppercase px-1.5 py-0.5 rounded-[5px] bg-accent-lime text-bg-primary">Admin</span>
           )}
           <span className="font-mono text-[10px] text-text-muted">{formatClock(message.createdAt)}</span>
+          {canModerate && onDelete && (
+            <button
+              onClick={() => onDelete(message.id)}
+              aria-label="Delete message"
+              title="Delete message"
+              className="ml-auto opacity-0 group-hover:opacity-100 focus:opacity-100 text-text-muted hover:text-accent-red transition-opacity"
+            >
+              <Trash2 size={13} />
+            </button>
+          )}
         </div>
         <div className="font-archivo font-medium text-[13px] text-text-secondary leading-snug">{message.body}</div>
         {message.attachedPick && <EmbeddedPickCard pick={message.attachedPick} />}

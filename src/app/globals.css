@@ -69,6 +69,21 @@
       border-right: 1px solid rgba(255, 255, 255, 0.05);
     }
   }
+  /* At desktop widths the phone-shell constraint gives way to the
+     sidebar + wide-content layout -- see Sidebar.tsx and page.tsx. */
+  @media (min-width: 1024px) {
+    .phone-shell {
+      max-width: none;
+      height: 100dvh;
+      border-left: none;
+      border-right: none;
+    }
+  }
+  .content-max {
+    max-width: 1180px;
+    margin: 0 auto;
+    width: 100%;
+  }
   .h-px {
     height: 1px;
   }

@@ -5,6 +5,9 @@ board of analysis across a few tiers, a results ledger with pending
 picks tracked openly, and a members' lounge — built with Next.js (App
 Router), Supabase (auth + Postgres), and Paystack (payments).
 
+Responsive from a phone up to a desktop sidebar layout — not just the
+mobile view stretched wide.
+
 ## Stack
 
 - **Next.js 16 / React 19 / TypeScript**, Tailwind v4 for styling
@@ -30,19 +33,55 @@ npm run dev
 ## Project layout
 
 ```
-src/app/             Root layout + the phone-shell page (composes the
-                     tab components below), tab-switched client-side
+src/app/             Root layout + the shell page (composes the tab
+                     components below), tab-switched client-side.
+                     Below `lg` it's the mobile phone-shell; at `lg`
+                     and up, Sidebar.tsx takes over navigation
+src/app/auth/        Password-reset landing page (the link Supabase's
+                     reset email points to)
+src/app/legal/       Terms, Privacy, Responsible Gambling -- draft
+                     templates, clearly marked as not-yet-lawyer-reviewed
 src/components/      Home / Slips / Proof / VIP / Chat tab components,
-                     the auth modal, bottom nav, and shared pick/ledger/
-                     chat-bubble UI pieces
-src/app/admin/       Posting and settling picks (admin-only, gated
-                     server-side in admin/layout.tsx)
-src/app/api/         Route Handlers: picks, chat, Paystack
+                     the desktop Sidebar, the auth modal, bottom nav
+                     (mobile), and shared pick/ledger/chat-bubble UI
+src/app/admin/       Posting and settling picks, admin-only, gated
+                     server-side in admin/layout.tsx
+src/app/api/         Route Handlers: picks, chat (incl. moderation),
+                     Paystack
 src/app/store/       React context + provider wiring the UI to /api
 src/lib/             Supabase clients, plan definitions, Paystack
                      helpers, shared types, date formatting
 supabase/schema.sql  Full DB schema + RLS policies
 ```
+
+## Beyond the core picks/payments flow
+
+- **Desktop layout**: `Sidebar.tsx` replaces the bottom nav at `lg`
+  widths; Home, Slips, Proof, and VIP reflow into multi-column layouts
+  instead of just centering the mobile view in empty space.
+- **Password reset**: "Forgot password?" in the login modal calls
+  Supabase's `resetPasswordForEmail`; the email link lands on
+  `/auth/reset-password`, which listens for the `PASSWORD_RECOVERY`
+  auth event before letting someone set a new password.
+- **Chat moderation**: admins get a delete control on every message
+  (hover on desktop, always visible on mobile) via
+  `DELETE /api/chat/[id]`.
+- **Accessibility pass**: icon-only buttons (send, pin, settle,
+  nav items, delete) have `aria-label`s; nav/filter/channel buttons
+  expose `aria-current`/`aria-pressed` for screen readers.
+- **Rate limiting**: a Postgres-backed sliding-window limiter
+  (`src/lib/rateLimit.ts`, `check_rate_limit()` in schema.sql) throttles
+  chat posting and checkout-initiation — no extra service to sign up
+  for. Signup/login abuse protection is Supabase's own (see SETUP.md).
+- **Analytics**: Google Analytics, gated behind an explicit
+  accept/decline consent banner (`src/components/Analytics.tsx`) —
+  entirely optional, controlled by one env var.
+- **SEO + PWA**: a dynamic sitemap, a brand-matched Open Graph share
+  image generated at request time, and a web manifest with proper
+  icons so the app can be added to a phone's home screen.
+- **Tests**: `npm test` runs a focused Vitest suite over the two
+  places a bug would be most costly — tier-locking (`plans.test.ts`)
+  and Paystack webhook signature verification (`paystack.test.ts`).
 
 ## A note on honesty in the product copy
 

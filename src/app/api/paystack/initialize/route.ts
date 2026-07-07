@@ -4,6 +4,7 @@ import { createAdminClient } from "@/lib/supabase/server";
 import { getSessionProfile } from "@/lib/session";
 import { getPlan, ghsToPesewas } from "@/lib/plans";
 import { initializeTransaction } from "@/lib/paystack";
+import { checkRateLimit, RATE_LIMITS } from "@/lib/rateLimit";
 
 export const dynamic = "force-dynamic";
 
@@ -24,6 +25,11 @@ export async function POST(request: NextRequest) {
   const { userId, profile } = await getSessionProfile();
   if (!userId || !profile) {
     return NextResponse.json({ error: "Sign in first" }, { status: 401 });
+  }
+
+  const withinLimit = await checkRateLimit(`checkout:${userId}`, RATE_LIMITS.CHECKOUT_INIT.max, RATE_LIMITS.CHECKOUT_INIT.windowSeconds);
+  if (!withinLimit) {
+    return NextResponse.json({ error: "Too many checkout attempts — wait a bit and try again" }, { status: 429 });
   }
 
   const body = await request.json().catch(() => null);

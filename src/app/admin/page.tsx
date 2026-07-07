@@ -168,7 +168,7 @@ function PendingPickCard({ pick, onSettled }: { pick: PickDTO; onSettled: () => 
         <button onClick={() => settle("won")} disabled={busy} className="text-[12px] font-archivo font-extrabold bg-[rgba(52,224,138,0.14)] text-accent-green rounded-[8px] px-3 py-1.5 disabled:opacity-50">Won</button>
         <button onClick={() => settle("lost")} disabled={busy} className="text-[12px] font-archivo font-extrabold bg-[rgba(255,77,77,0.13)] text-accent-red rounded-[8px] px-3 py-1.5 disabled:opacity-50">Lost</button>
         <button onClick={() => settle("void")} disabled={busy} className="text-[12px] font-archivo font-extrabold bg-white/8 text-text-secondary rounded-[8px] px-3 py-1.5 disabled:opacity-50">Void</button>
-        <button onClick={remove} className="text-[12px] font-archivo font-extrabold text-text-muted px-2" title="Delete pick">✕</button>
+        <button onClick={remove} aria-label="Delete pick" title="Delete pick" className="text-[12px] font-archivo font-extrabold text-text-muted px-2">✕</button>
       </div>
     </div>
   );

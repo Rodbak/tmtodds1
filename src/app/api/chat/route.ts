@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/server";
 import { getSessionProfile } from "@/lib/session";
 import { planCoversTier, isPlanActive, type Tier } from "@/lib/plans";
+import { checkRateLimit, RATE_LIMITS } from "@/lib/rateLimit";
 import type { ChatMessageDTO, ChatAttachedPick, PickStatus } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -116,6 +117,11 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const { userId, profile } = await getSessionProfile();
   if (!userId || !profile) return NextResponse.json({ error: "Sign in required" }, { status: 401 });
+
+  const withinLimit = await checkRateLimit(`chat:${userId}`, RATE_LIMITS.CHAT_POST.max, RATE_LIMITS.CHAT_POST.windowSeconds);
+  if (!withinLimit) {
+    return NextResponse.json({ error: "You're posting too fast — wait a moment and try again" }, { status: 429 });
+  }
 
   const body = await request.json().catch(() => null);
   const channel: string = body?.channel ?? "general";

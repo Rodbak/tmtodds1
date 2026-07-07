@@ -27,6 +27,7 @@ export type AppState = {
   login: (email: string, password: string) => Promise<AuthResult>;
   register: (name: string, email: string, password: string) => Promise<AuthResult>;
   logout: () => Promise<void>;
+  requestPasswordReset: (email: string) => Promise<AuthResult>;
 
   // Today's board
   todayPicks: PickDTO[];
@@ -49,6 +50,7 @@ export type AppState = {
   activeChannel: string;
   setActiveChannel: (c: string) => void;
   sendMessage: (text: string, opts?: SendMessageOptions) => Promise<AuthResult>;
+  deleteMessage: (id: string) => Promise<AuthResult>;
 
   // Billing
   startCheckout: (planId: PlanId) => Promise<void>;

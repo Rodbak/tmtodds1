@@ -9,17 +9,17 @@ export function VipTab({ onShowAuth }: { onShowAuth: () => void }) {
   const { profile, startCheckout, checkoutLoading, checkoutError } = useApp();
 
   return (
-    <div className="px-4 pb-4">
-      <div className="flex items-center gap-2 px-5 py-2">
+    <div className="px-4 pb-4 lg:px-8 lg:pb-10 lg:content-max">
+      <div className="flex items-center gap-2 px-5 py-2 lg:px-0 lg:pt-6">
         <Crown size={22} className="text-accent-lime" />
         <h2 className="font-anton text-[26px] tracking-wider text-text-primary uppercase">VIP packages</h2>
       </div>
-      <p className="font-archivo font-medium text-[12px] text-text-secondary px-5 mb-4 leading-snug">
+      <p className="font-archivo font-medium text-[12px] text-text-secondary px-5 mb-4 leading-snug lg:px-0 lg:mb-6">
         Pick a tier. Unlock the board, the picks, and the members&apos; lounge.
       </p>
-      {checkoutError && <p className="px-5 text-accent-red text-[12px] font-archivo mb-3">{checkoutError}</p>}
+      {checkoutError && <p className="px-5 text-accent-red text-[12px] font-archivo mb-3 lg:px-0">{checkoutError}</p>}
 
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-3 lg:grid lg:grid-cols-2 xl:grid-cols-4 lg:gap-4 lg:items-start">
         {PLANS.map((plan) => {
           const isCurrent = profile?.plan === plan.id && isPlanActive(profile?.plan, profile?.planExpiresAt);
           return (
