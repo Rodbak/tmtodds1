@@ -3,6 +3,7 @@ import { Anton, Archivo, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { AppProvider } from "./store/AppProvider";
 import { Analytics } from "@/components/Analytics";
+import { Analytics as VercelAnalytics } from "@vercel/analytics/next";
 
 const anton = Anton({
   variable: "--font-anton",
@@ -64,6 +65,11 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col bg-bg-primary text-text-primary font-archivo">
         <AppProvider>{children}</AppProvider>
         <Analytics />
+        {/* Vercel Analytics -- cookieless, no personal data, so unlike
+            the GA component above it isn't gated behind the consent
+            banner. Shows up automatically in the Vercel dashboard once
+            deployed; nothing to configure. */}
+        <VercelAnalytics />
       </body>
     </html>
   );
