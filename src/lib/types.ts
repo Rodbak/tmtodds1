@@ -13,6 +13,11 @@ export type Profile = {
 
 export type PickStatus = "pending" | "won" | "lost" | "void";
 
+export type PickProofDTO = {
+  id: string;
+  url: string;
+};
+
 // Shape returned by GET /api/picks. When `locked` is true, market and
 // odds are stripped server-side before the response is sent -- the
 // client never receives data it isn't allowed to show.
@@ -27,6 +32,22 @@ export type PickDTO = {
   locked: boolean;
   market: string | null;
   odds: number | null;
+  externalFixtureId: string | null;
+  // Bet-slip screenshots for this pick. Only populated on the ledger
+  // scope (settled results) -- the "today" board never fetches these.
+  proofs: PickProofDTO[];
+};
+
+// One fixture's current state from the live-scores provider. `status`
+// is the provider's short code: NS (not started), 1H/HT/2H/ET/P/BT
+// (in progress in some form), FT/AET/PEN (finished), PST/CANC/ABD
+// (postponed/cancelled/abandoned).
+export type LiveScoreDTO = {
+  externalFixtureId: string;
+  status: string;
+  elapsed: number | null;
+  homeScore: number | null;
+  awayScore: number | null;
 };
 
 export type LedgerStats = {

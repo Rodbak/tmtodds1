@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { AppContext as Ctx, type Tab, type SlipItem, type AuthResult, type LedgerFilter, type SendMessageOptions } from "./AppContext";
 import type { PickDTO, ChatMessageDTO, LedgerStats, Profile } from "@/lib/types";
 import type { PlanId } from "@/lib/plans";
+import { useLiveScores } from "@/lib/useLiveScores";
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [supabase] = useState(() => createClient());
@@ -19,6 +20,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [todayPicks, setTodayPicks] = useState<PickDTO[]>([]);
   const [picksLoading, setPicksLoading] = useState(true);
   const [slipIds, setSlipIds] = useState<Set<string>>(new Set());
+  // Only poll for live scores while a tab that shows picks is open.
+  const liveScores = useLiveScores(todayPicks, tab === "home" || tab === "slips");
 
   // Proof & results
   const [ledger, setLedger] = useState<PickDTO[]>([]);
@@ -232,6 +235,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     picksLoading,
     toggleSlip,
     slipItems,
+    liveScores,
     ledger,
     stats,
     ledgerLoading,

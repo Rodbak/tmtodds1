@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/server";
 import { getSessionProfile, requireAdmin } from "@/lib/session";
 import { planCoversTier, isPlanActive, TIER_ORDER } from "@/lib/plans";
-import type { PickDTO, LedgerStats, PickStatus } from "@/lib/types";
+import type { PickDTO, PickProofDTO, LedgerStats, PickStatus } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -17,7 +17,22 @@ type PickRow = {
   status: PickStatus;
   result_note: string | null;
   settled_at: string | null;
+  external_fixture_id: string | null;
 };
+
+type ProofRow = { id: string; pick_id: string; image_path: string };
+
+/** Groups pick_proofs rows by pick_id and resolves each image_path to its public storage URL. */
+function groupProofsByPick(rows: ProofRow[], admin: ReturnType<typeof createAdminClient>): Map<string, PickProofDTO[]> {
+  const byPick = new Map<string, PickProofDTO[]>();
+  for (const row of rows) {
+    const { data } = admin.storage.from("proof-images").getPublicUrl(row.image_path);
+    const list = byPick.get(row.pick_id) ?? [];
+    list.push({ id: row.id, url: data.publicUrl });
+    byPick.set(row.pick_id, list);
+  }
+  return byPick;
+}
 
 function computeStats(settledDesc: PickRow[], totalDelivered: number): LedgerStats {
   const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
@@ -56,6 +71,17 @@ export async function GET(request: NextRequest) {
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
     const rows = (combined ?? []) as PickRow[];
+
+    let proofsByPick = new Map<string, PickProofDTO[]>();
+    if (rows.length > 0) {
+      const { data: proofRows, error: proofsError } = await supabase
+        .from("pick_proofs")
+        .select("id, pick_id, image_path")
+        .in("pick_id", rows.map((p) => p.id));
+      if (proofsError) return NextResponse.json({ error: proofsError.message }, { status: 500 });
+      proofsByPick = groupProofsByPick((proofRows ?? []) as ProofRow[], supabase);
+    }
+
     const items: PickDTO[] = rows.map((p) => {
       const tier = p.tier as PickDTO["tier"];
       // Settled results stay fully visible, proving the track record.
@@ -74,6 +100,8 @@ export async function GET(request: NextRequest) {
         locked,
         market: locked ? null : p.market,
         odds: locked ? null : Number(p.odds),
+        externalFixtureId: p.external_fixture_id,
+        proofs: proofsByPick.get(p.id) ?? [],
       };
     });
 
@@ -105,6 +133,8 @@ export async function GET(request: NextRequest) {
       locked,
       market: locked ? null : p.market,
       odds: locked ? null : Number(p.odds),
+      externalFixtureId: p.external_fixture_id,
+      proofs: [],
     };
   });
 
@@ -116,7 +146,7 @@ export async function POST(request: NextRequest) {
   if (!admin.ok) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const body = await request.json().catch(() => null);
-  const { league, fixture, market, odds, kickoffAt, tier } = body ?? {};
+  const { league, fixture, market, odds, kickoffAt, tier, externalFixtureId } = body ?? {};
 
   if (!league || !fixture || !market || !odds || !kickoffAt || !tier) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -128,7 +158,15 @@ export async function POST(request: NextRequest) {
   const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("picks")
-    .insert({ league, fixture, market, odds, kickoff_at: kickoffAt, tier })
+    .insert({
+      league,
+      fixture,
+      market,
+      odds,
+      kickoff_at: kickoffAt,
+      tier,
+      external_fixture_id: typeof externalFixtureId === "string" && externalFixtureId.trim() ? externalFixtureId.trim() : null,
+    })
     .select()
     .single();
 

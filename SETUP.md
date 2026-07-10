@@ -45,6 +45,12 @@ database system" that was intentionally left for you to fill in.
    Rate Limits**, and turn on CAPTCHA (hCaptcha or Cloudflare Turnstile)
    under **Authentication → Attack Protection** if you want a bot
    deterrent on the signup form itself.
+8. **Already ran `schema.sql` before adding live scores/proof photos to
+   this codebase?** Re-run it — every statement is guarded with
+   `if not exists` / `on conflict do nothing`, so it only adds what's
+   new: the `picks.external_fixture_id` column, the `pick_proofs`
+   table, and a public `proof-images` Storage bucket. Nothing existing
+   gets touched.
 
 ## 2. Paystack
 
@@ -68,7 +74,47 @@ database system" that was intentionally left for you to fill in.
 5. When you're ready to accept real money, switch `.env.local` to the
    live key pair and repeat step 3 with your live webhook URL.
 
-## 3. Google Analytics (optional)
+## 3. Live scores (optional)
+
+Picks on the board and the Slips tab can show a small "LIVE 63' · 1-0"
+badge once a match kicks off, sourced from
+[api-football](https://www.api-football.com/) (also branded
+api-sports.io) — its direct API has a free tier (~100 requests/day)
+that's plenty for a handful of daily picks.
+
+1. Create a free account at
+   [dashboard.api-football.com](https://dashboard.api-football.com/register)
+   and copy your API key from the dashboard home page.
+2. Set `SPORTS_API_KEY` in `.env.local`. Leave it blank to run without
+   live scores at all — picks just never show the badge, nothing else
+   depends on it.
+3. When posting a pick in `/admin`, fill in the optional **External
+   fixture ID** field with that match's fixture id from api-football
+   (searchable on their site/dashboard by team names and date, or via
+   their `/fixtures` endpoint). A pick with no id posted just won't
+   show a live badge — everything else about it works the same.
+4. This only ever adds an informational badge (score, match clock,
+   HT/FT/postponed). It never settles a pick automatically — Won /
+   Lost / Void in `/admin` is still the only thing that decides a
+   pick's outcome, on purpose (a stray postponement or an ambiguous
+   market like "Over 1.5" shouldn't get auto-graded).
+5. Bet-slip proof photos are a separate, unrelated feature — see
+   "Proof photos" below; they don't need this API key at all.
+
+## 4. Proof photos
+
+Every settled pick in the admin panel's "Recently settled" list has an
+upload control for bet-slip screenshots (multiple per pick). They're
+stored in the `proof-images` Supabase Storage bucket that
+`schema.sql` creates, and show up as a thumbnail strip (tap to
+enlarge) on that pick's row in the Proof tab's ledger — already
+grouped implicitly by the Won/Lost/Pending filter that tab has had
+from the start, since a proof photo is just attached to an
+already-classified pick. Nothing to configure here beyond having run
+`schema.sql`; uploads go through `/api/picks/[id]/proofs` using the
+service-role key, same as every other admin write in this app.
+
+## 5. Google Analytics (optional)
 
 1. Create a GA4 property at [analytics.google.com](https://analytics.google.com), add a web data stream for your
    domain, and copy the **Measurement ID** (starts with `G-`).
@@ -78,7 +124,7 @@ database system" that was intentionally left for you to fill in.
    banner shown on their first visit (see `src/components/Analytics.tsx`); "Decline" means it never loads for
    them. This is already reflected in the Privacy Policy draft.
 
-## 4. Running locally
+## 6. Running locally
 
 ```bash
 npm install
@@ -89,17 +135,45 @@ npm run dev
 Visit `http://localhost:3000`. Sign up, make yourself admin (step 5
 above), then visit `/admin` to post today's first pick.
 
-## 5. Deploying
+## 7. Deploying
 
-Any host that runs Next.js works. On Vercel: import the repo, add the
-same variables from `.env.local` in **Project Settings → Environment
-Variables**, and set `NEXT_PUBLIC_SITE_URL` to your real domain (this
-is used to build the Paystack redirect URL, the sitemap, and the
-Open Graph share image — if it's wrong, all three point at the wrong
-place). Redeploy after adding a webhook URL that points at the
-deployed domain.
+Any host that runs Next.js works. On Vercel, there are two ways
+Supabase ends up connected to the project — what matters is that every
+variable below actually lands in **Project Settings → Environment
+Variables**, however it gets there:
 
-## 6. Before you actually launch
+**If you installed Supabase through Vercel's Integration/Marketplace
+tab** (Vercel dashboard → your project → **Storage** tab → the
+Supabase entry, or **Integrations** tab depending on Vercel's current
+layout): the integration only auto-syncs the Supabase-specific
+variables — `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`,
+and usually `SUPABASE_SERVICE_ROLE_KEY`. Check **Project Settings →
+Environment Variables** to confirm all three actually appear (the
+service role key is the one most often missed, since some integration
+versions only push the anon key) — if it's missing, copy it in
+manually from Supabase's **Project Settings → API**. Everything else
+this app needs — `NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY`, `PAYSTACK_SECRET_KEY`,
+`NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_GA_MEASUREMENT_ID`, `SPORTS_API_KEY`
+— is never something the integration knows about, so add those by hand
+the same way.
+
+**If you just created both projects separately with no integration**:
+add every variable from `.env.local` by hand in **Project Settings →
+Environment Variables** — nothing syncs automatically.
+
+Either way:
+1. Set `NEXT_PUBLIC_SITE_URL` to your real domain (used to build the
+   Paystack redirect URL, the sitemap, and the Open Graph share image —
+   if it's wrong, all three point at the wrong place).
+2. Redeploy after adding these (env var changes need a redeploy to take
+   effect on Vercel).
+3. Add the Paystack webhook URL pointing at the deployed domain (see
+   step 2.3 above) and redeploy again.
+4. Confirm `supabase/schema.sql` has actually been run against this
+   project's database (SQL Editor → paste → run) — the integration
+   only wires up the *connection*, it doesn't create any tables.
+
+## 8. Before you actually launch
 
 A few things ship as drafts on purpose and need your input before real
 users see them:
@@ -151,3 +225,12 @@ users see them:
   leak paid content or mis-activate a payment. UI and API-route
   integration tests aren't included; add them as this grows past the
   first version.
+- **Live scores never auto-settle a pick.** The badge is purely
+  informational (score, clock, HT/FT/postponed); Won/Lost/Void in
+  `/admin` is still the only thing that decides an outcome. Matching a
+  pick to a live fixture is also manual — admin pastes in the
+  api-football fixture id when posting the pick, rather than the app
+  guessing it from the free-text fixture name.
+- **Proof photos have no moderation/cropping/compression pipeline** —
+  whatever the admin uploads (up to 5MB, image files only) is what
+  gets stored and shown, as-is.

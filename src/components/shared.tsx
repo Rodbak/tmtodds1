@@ -1,9 +1,83 @@
-import { Check, Plus, Lock, Trash2 } from "lucide-react";
-import type { PickDTO, ChatMessageDTO, ChatAttachedPick } from "@/lib/types";
+import { useState } from "react";
+import { Check, Plus, Lock, Trash2, X } from "lucide-react";
+import type { PickDTO, PickProofDTO, ChatMessageDTO, ChatAttachedPick, LiveScoreDTO } from "@/lib/types";
 import type { PlanId } from "@/lib/plans";
 import { PLANS } from "@/lib/plans";
+import { isLiveStatus } from "@/lib/liveScores";
 import { formatKickoff, formatClock, formatShortDate } from "@/lib/format";
 import { TIER_META, STATUS_META, PLAN_STYLE } from "./meta";
+
+const LIVE_STATUS_LABEL: Record<string, string> = {
+  HT: "HT",
+  FT: "FT",
+  AET: "FT",
+  PEN: "FT",
+  PST: "Postponed",
+  CANC: "Cancelled",
+  ABD: "Abandoned",
+};
+
+/** Small "LIVE 63' · 1-0" (or HT/FT/postponed) badge for a pick that has a live-scores fixture id attached. Renders nothing once there's nothing worth showing (no data yet, or kickoff hasn't happened). */
+export function LiveScoreBadge({ score }: { score?: LiveScoreDTO }) {
+  if (!score) return null;
+  const live = isLiveStatus(score.status);
+  const label = live ? `LIVE${score.elapsed != null ? ` ${score.elapsed}'` : ""}` : LIVE_STATUS_LABEL[score.status];
+  if (!label) return null;
+  const hasScore = score.homeScore != null && score.awayScore != null;
+
+  return (
+    <div className={`inline-flex items-center gap-1.5 rounded-[6px] px-2 py-0.5 ${live ? "bg-[rgba(255,77,77,0.13)]" : "bg-white/8"}`}>
+      {live && <span className="w-1.5 h-1.5 rounded-full bg-accent-red animate-pulse-live" />}
+      <span className={`font-archivo font-extrabold text-[9px] tracking-wider uppercase ${live ? "text-accent-red" : "text-text-secondary"}`}>{label}</span>
+      {hasScore && (
+        <span className="font-mono font-extrabold text-[10px] text-text-primary">
+          {score.homeScore}-{score.awayScore}
+        </span>
+      )}
+    </div>
+  );
+}
+
+/** Thumbnail strip of a settled pick's bet-slip screenshots, with a tap-to-enlarge lightbox. */
+function ProofGallery({ proofs }: { proofs: PickProofDTO[] }) {
+  const [openIndex, setOpenIndex] = useState<number | null>(null);
+  if (proofs.length === 0) return null;
+
+  return (
+    <>
+      <div className="flex gap-1.5 mt-2 flex-wrap">
+        {proofs.map((proof, i) => (
+          <button
+            key={proof.id}
+            onClick={() => setOpenIndex(i)}
+            aria-label={`Open proof screenshot ${i + 1}`}
+            className="w-12 h-12 rounded-[8px] overflow-hidden border border-border-subtle flex-shrink-0"
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={proof.url} alt="" className="w-full h-full object-cover" />
+          </button>
+        ))}
+      </div>
+      {openIndex !== null && (
+        <div
+          className="fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-6"
+          onClick={() => setOpenIndex(null)}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={proofs[openIndex].url}
+            alt="Proof screenshot"
+            className="max-w-full max-h-full rounded-[12px]"
+            onClick={(e) => e.stopPropagation()}
+          />
+          <button onClick={() => setOpenIndex(null)} aria-label="Close" className="absolute top-4 right-4 text-white">
+            <X size={26} />
+          </button>
+        </div>
+      )}
+    </>
+  );
+}
 
 export function StatCard({ value, label, color }: { value: string; label: string; color: string }) {
   return (
@@ -78,38 +152,54 @@ export function LedgerRow({ pick }: { pick: PickDTO }) {
   // screen. A still-pending pick can be locked exactly like the board,
   // so this list can't be used to peek at a paid pick early.
   return (
-    <div className={`bg-bg-secondary border rounded-[14px] p-3 flex items-center gap-3 ${pick.locked ? "border-border-gold" : "border-border-subtle"}`}>
-      <div className={`w-9 h-9 rounded-[10px] ${meta.bg} flex items-center justify-center flex-shrink-0`}>
-        <Icon size={18} className={meta.color} />
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className="font-archivo font-extrabold text-[13px] text-text-primary truncate">{pick.fixture}</div>
-        <div className="font-archivo font-medium text-[11px] text-text-secondary mt-0.5">
-          {pick.locked ? (
-            <span className="inline-flex items-center gap-1 text-accent-gold">
-              <Lock size={10} /> Unlock to view market
-            </span>
-          ) : (
-            <>{pick.market} · {formatShortDate(pick.kickoffAt)}</>
-          )}
+    <div className={`bg-bg-secondary border rounded-[14px] p-3 ${pick.locked ? "border-border-gold" : "border-border-subtle"}`}>
+      <div className="flex items-center gap-3">
+        <div className={`w-9 h-9 rounded-[10px] ${meta.bg} flex items-center justify-center flex-shrink-0`}>
+          <Icon size={18} className={meta.color} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="font-archivo font-extrabold text-[13px] text-text-primary truncate">{pick.fixture}</div>
+          <div className="font-archivo font-medium text-[11px] text-text-secondary mt-0.5">
+            {pick.locked ? (
+              <span className="inline-flex items-center gap-1 text-accent-gold">
+                <Lock size={10} /> Unlock to view market
+              </span>
+            ) : (
+              <>{pick.market} · {formatShortDate(pick.kickoffAt)}</>
+            )}
+          </div>
+        </div>
+        <div className="text-right flex-shrink-0">
+          <div className={`font-mono font-extrabold text-[14px] ${meta.color}`}>{meta.label}</div>
+          <div className="font-mono text-[11px] text-text-muted mt-0.5">{pick.odds != null ? `@${pick.odds.toFixed(2)}` : "••"}</div>
         </div>
       </div>
-      <div className="text-right flex-shrink-0">
-        <div className={`font-mono font-extrabold text-[14px] ${meta.color}`}>{meta.label}</div>
-        <div className="font-mono text-[11px] text-text-muted mt-0.5">{pick.odds != null ? `@${pick.odds.toFixed(2)}` : "••"}</div>
-      </div>
+      <ProofGallery proofs={pick.proofs} />
     </div>
   );
 }
 
-export function PickCard({ pick, addedToSlip, onToggle }: { pick: PickDTO; addedToSlip: boolean; onToggle: () => void }) {
+export function PickCard({
+  pick,
+  addedToSlip,
+  onToggle,
+  liveScore,
+}: {
+  pick: PickDTO;
+  addedToSlip: boolean;
+  onToggle: () => void;
+  liveScore?: LiveScoreDTO;
+}) {
   const meta = TIER_META[pick.tier];
   const locked = pick.locked;
   return (
     <div className={`rounded-[16px] p-4 bg-bg-secondary border ${locked ? "border-border-gold" : "border-border-subtle"}`}>
-      <div className="flex items-center justify-between mb-2">
-        <span className="font-archivo font-semibold text-[11px] text-text-secondary">{pick.league} · {formatKickoff(pick.kickoffAt)}</span>
-        <span className={`font-archivo font-extrabold text-[9px] tracking-wider uppercase px-2 py-0.5 rounded-[6px] ${meta.tagStyle}`}>{meta.label}</span>
+      <div className="flex items-center justify-between mb-2 gap-2">
+        <span className="font-archivo font-semibold text-[11px] text-text-secondary truncate">{pick.league} · {formatKickoff(pick.kickoffAt)}</span>
+        <div className="flex items-center gap-1.5 flex-shrink-0">
+          <LiveScoreBadge score={liveScore} />
+          <span className={`font-archivo font-extrabold text-[9px] tracking-wider uppercase px-2 py-0.5 rounded-[6px] ${meta.tagStyle}`}>{meta.label}</span>
+        </div>
       </div>
       <div className="font-archivo font-extrabold text-[17px] text-text-primary mb-3">{pick.fixture}</div>
       <div className="flex items-end justify-between">

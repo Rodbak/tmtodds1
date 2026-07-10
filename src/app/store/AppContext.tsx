@@ -1,5 +1,5 @@
 import { createContext } from "react";
-import type { PickDTO, ChatMessageDTO, LedgerStats, Profile } from "@/lib/types";
+import type { PickDTO, ChatMessageDTO, LedgerStats, LiveScoreDTO, Profile } from "@/lib/types";
 import type { PlanId } from "@/lib/plans";
 
 export type Tab = "home" | "slips" | "proof" | "vip" | "chat";
@@ -34,6 +34,9 @@ export type AppState = {
   picksLoading: boolean;
   toggleSlip: (id: string) => void;
   slipItems: SlipItem[];
+  // Live scores for whichever today's-board picks have a kickoff in
+  // progress, keyed by externalFixtureId. See src/lib/useLiveScores.ts.
+  liveScores: Record<string, LiveScoreDTO>;
 
   // Proof & results
   ledger: PickDTO[];

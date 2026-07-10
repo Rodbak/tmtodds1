@@ -2,9 +2,11 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import type { PickDTO, PickStatus } from "@/lib/types";
+import type { PickDTO, PickStatus, LiveScoreDTO } from "@/lib/types";
 import type { Tier } from "@/lib/plans";
 import { formatKickoff } from "@/lib/format";
+import { useLiveScores } from "@/lib/useLiveScores";
+import { LiveScoreBadge } from "@/components/shared";
 
 const TIER_OPTIONS: { id: Tier; label: string }[] = [
   { id: "free", label: "Free" },
@@ -24,9 +26,9 @@ const STATUS_COLOR: Record<PickStatus, string> = {
 const field = "w-full bg-bg-primary border border-border-subtle rounded-[10px] px-3 py-2.5 font-archivo text-[13px] text-text-primary outline-none focus:border-accent-lime placeholder:text-text-muted";
 const fieldLabel = "block font-archivo font-bold text-[11px] text-text-secondary uppercase tracking-wide mb-1.5";
 
-type DraftPick = { league: string; fixture: string; market: string; odds: string; kickoffAt: string; tier: Tier };
+type DraftPick = { league: string; fixture: string; market: string; odds: string; kickoffAt: string; tier: Tier; externalFixtureId: string };
 
-const EMPTY_DRAFT: DraftPick = { league: "", fixture: "", market: "", odds: "", kickoffAt: "", tier: "free" };
+const EMPTY_DRAFT: DraftPick = { league: "", fixture: "", market: "", odds: "", kickoffAt: "", tier: "free", externalFixtureId: "" };
 
 /** Owns fetching + refreshing both lists the admin panel needs. */
 function useAdminBoard() {
@@ -80,7 +82,12 @@ function NewPickForm({ onCreated }: { onCreated: () => void }) {
       const res = await fetch("/api/picks", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...draft, odds: oddsNum, kickoffAt: new Date(draft.kickoffAt).toISOString() }),
+        body: JSON.stringify({
+          ...draft,
+          odds: oddsNum,
+          kickoffAt: new Date(draft.kickoffAt).toISOString(),
+          externalFixtureId: draft.externalFixtureId || null,
+        }),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "Could not create pick");
@@ -125,6 +132,15 @@ function NewPickForm({ onCreated }: { onCreated: () => void }) {
             ))}
           </select>
         </div>
+        <div>
+          <label className={fieldLabel}>External fixture ID (optional)</label>
+          <input
+            placeholder="api-football fixture id, for live score"
+            value={draft.externalFixtureId}
+            onChange={(e) => patch({ externalFixtureId: e.target.value })}
+            className={field}
+          />
+        </div>
       </div>
       {error && <p className="text-accent-red text-[12px] font-archivo mb-3">{error}</p>}
       <button onClick={submit} disabled={submitting} className="bg-accent-lime text-bg-primary font-archivo font-extrabold text-[13px] rounded-[10px] px-4 py-2.5 disabled:opacity-60">
@@ -134,7 +150,7 @@ function NewPickForm({ onCreated }: { onCreated: () => void }) {
   );
 }
 
-function PendingPickCard({ pick, onSettled }: { pick: PickDTO; onSettled: () => void }) {
+function PendingPickCard({ pick, onSettled, liveScore }: { pick: PickDTO; onSettled: () => void; liveScore?: LiveScoreDTO }) {
   const [busy, setBusy] = useState(false);
 
   const settle = async (status: "won" | "lost" | "void") => {
@@ -159,7 +175,10 @@ function PendingPickCard({ pick, onSettled }: { pick: PickDTO; onSettled: () => 
   return (
     <div className="bg-bg-secondary border border-border-subtle rounded-[12px] p-4 flex flex-wrap items-center justify-between gap-3">
       <div className="min-w-0">
-        <div className="font-archivo font-bold text-[14px] truncate">{pick.fixture}</div>
+        <div className="font-archivo font-bold text-[14px] truncate flex items-center gap-2">
+          {pick.fixture}
+          <LiveScoreBadge score={liveScore} />
+        </div>
         <div className="font-archivo text-[12px] text-text-secondary">
           {pick.league} · {formatKickoff(pick.kickoffAt)} · {pick.market} · @{pick.odds?.toFixed(2)} · tier: {pick.tier}
         </div>
@@ -174,8 +193,78 @@ function PendingPickCard({ pick, onSettled }: { pick: PickDTO; onSettled: () => 
   );
 }
 
+/** A settled pick's row in the admin panel, with the bet-slip proof-photo upload/delete controls. */
+function SettledPickRow({ pick, onChanged }: { pick: PickDTO; onChanged: () => void }) {
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState("");
+
+  const upload = async (fileList: FileList | null) => {
+    if (!fileList || fileList.length === 0) return;
+    setError("");
+    setUploading(true);
+    try {
+      const form = new FormData();
+      Array.from(fileList).forEach((file) => form.append("files", file));
+      const res = await fetch(`/api/picks/${pick.id}/proofs`, { method: "POST", body: form });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json.error ?? "Upload failed");
+      onChanged();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Upload failed");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const removeProof = async (proofId: string) => {
+    await fetch(`/api/picks/${pick.id}/proofs/${proofId}`, { method: "DELETE" });
+    onChanged();
+  };
+
+  return (
+    <div className="bg-bg-secondary border border-border-subtle rounded-[12px] p-3 text-[12px] font-archivo">
+      <div className="flex items-center justify-between gap-3">
+        <span className="truncate">{pick.fixture} · {pick.market}</span>
+        <span className={`font-extrabold flex-shrink-0 ${STATUS_COLOR[pick.status]}`}>{pick.status.toUpperCase()}</span>
+      </div>
+      <div className="flex items-center gap-2 mt-2 flex-wrap">
+        {pick.proofs.map((proof) => (
+          <div key={proof.id} className="relative w-12 h-12 rounded-[8px] overflow-hidden border border-border-subtle">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={proof.url} alt="" className="w-full h-full object-cover" />
+            <button
+              onClick={() => removeProof(proof.id)}
+              aria-label="Remove proof photo"
+              title="Remove proof photo"
+              className="absolute top-0 right-0 bg-black/70 text-white text-[9px] px-1 leading-tight"
+            >
+              ✕
+            </button>
+          </div>
+        ))}
+        <label className="w-12 h-12 rounded-[8px] border border-dashed border-border-subtle flex items-center justify-center text-text-muted cursor-pointer">
+          {uploading ? "…" : "+"}
+          <input
+            type="file"
+            accept="image/*"
+            multiple
+            className="hidden"
+            disabled={uploading}
+            onChange={(e) => {
+              upload(e.target.files);
+              e.target.value = "";
+            }}
+          />
+        </label>
+      </div>
+      {error && <p className="text-accent-red text-[11px] mt-1">{error}</p>}
+    </div>
+  );
+}
+
 export default function AdminPage() {
   const { pending, settled, loading, reload } = useAdminBoard();
+  const liveScores = useLiveScores(pending);
 
   return (
     <div className="max-w-3xl mx-auto px-6 py-10">
@@ -195,7 +284,12 @@ export default function AdminPage() {
         ) : (
           <div className="flex flex-col gap-2">
             {pending.map((p) => (
-              <PendingPickCard key={p.id} pick={p} onSettled={reload} />
+              <PendingPickCard
+                key={p.id}
+                pick={p}
+                onSettled={reload}
+                liveScore={p.externalFixtureId ? liveScores[p.externalFixtureId] : undefined}
+              />
             ))}
           </div>
         )}
@@ -208,10 +302,7 @@ export default function AdminPage() {
         ) : (
           <div className="flex flex-col gap-2">
             {settled.map((p) => (
-              <div key={p.id} className="bg-bg-secondary border border-border-subtle rounded-[12px] p-3 flex items-center justify-between text-[12px] font-archivo gap-3">
-                <span className="truncate">{p.fixture} · {p.market}</span>
-                <span className={`font-extrabold flex-shrink-0 ${STATUS_COLOR[p.status]}`}>{p.status.toUpperCase()}</span>
-              </div>
+              <SettledPickRow key={p.id} pick={p} onChanged={reload} />
             ))}
           </div>
         )}

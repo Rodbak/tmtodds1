@@ -4,10 +4,10 @@ import Link from "next/link";
 import { Zap, LogIn, LogOut, Settings, Check } from "lucide-react";
 import { useApp } from "@/app/store/AppProvider";
 import { formatKickoff } from "@/lib/format";
-import { StatCard, FormBadge } from "./shared";
+import { StatCard, FormBadge, LiveScoreBadge } from "./shared";
 
 export function HomeTab({ onShowAuth }: { onShowAuth: () => void }) {
-  const { profile, logout, todayPicks, ledger, stats, setTab } = useApp();
+  const { profile, logout, todayPicks, ledger, stats, setTab, liveScores } = useApp();
 
   const freePick = todayPicks.find((p) => p.tier === "free");
   const recentForm = ledger
@@ -79,9 +79,12 @@ export function HomeTab({ onShowAuth }: { onShowAuth: () => void }) {
           </div>
           {freePick ? (
             <div className="mx-4 lg:mx-0 bg-bg-secondary border border-border-subtle rounded-[16px] p-3.5 lg:p-6">
-              <div className="flex items-center justify-between mb-2">
-                <span className="font-archivo font-bold text-[11px] text-text-secondary">{freePick.league}</span>
-                <span className="font-mono text-[11px] text-text-muted">{formatKickoff(freePick.kickoffAt)}</span>
+              <div className="flex items-center justify-between mb-2 gap-2">
+                <span className="font-archivo font-bold text-[11px] text-text-secondary truncate">{freePick.league}</span>
+                <div className="flex items-center gap-1.5 flex-shrink-0">
+                  <LiveScoreBadge score={freePick.externalFixtureId ? liveScores[freePick.externalFixtureId] : undefined} />
+                  <span className="font-mono text-[11px] text-text-muted">{formatKickoff(freePick.kickoffAt)}</span>
+                </div>
               </div>
               <div className="font-archivo font-extrabold text-[19px] lg:text-[24px] text-text-primary mb-3">{freePick.fixture}</div>
               <div className="flex items-end justify-between">

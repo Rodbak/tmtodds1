@@ -76,6 +76,16 @@ supabase/schema.sql  Full DB schema + RLS policies
 - **Analytics**: Google Analytics, gated behind an explicit
   accept/decline consent banner (`src/components/Analytics.tsx`) —
   entirely optional, controlled by one env var.
+- **Live scores**: an optional "LIVE 63' · 1-0" badge on today's board
+  once a pick's match kicks off, sourced from api-football
+  (`src/lib/liveScores.ts`, `src/lib/useLiveScores.ts`,
+  `/api/live-scores`). Purely informational — it never settles a pick;
+  Won/Lost/Void in `/admin` still does that by hand.
+- **Proof photos**: bet-slip screenshots (multiple per pick) uploaded
+  in `/admin` after settling, stored in a public Supabase Storage
+  bucket and shown as a tap-to-enlarge thumbnail strip on that pick's
+  row in the Proof tab — visual backing for the win rate, grouped
+  implicitly by the ledger's existing Won/Lost/Pending filter.
 - **SEO + PWA**: a dynamic sitemap, a brand-matched Open Graph share
   image generated at request time, and a web manifest with proper
   icons so the app can be added to a phone's home screen.

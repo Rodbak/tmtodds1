@@ -77,11 +77,49 @@ create table if not exists picks (
   status pick_status not null default 'pending',
   result_note text,
   created_at timestamptz not null default now(),
-  settled_at timestamptz
+  settled_at timestamptz,
+  -- Fixture id from the live-scores provider (api-football/api-sports.io),
+  -- entered by admin when posting a pick. Optional: a pick with no id
+  -- just never shows a live badge. See src/lib/liveScores.ts.
+  external_fixture_id text
 );
+
+alter table picks add column if not exists external_fixture_id text;
 
 create index if not exists picks_kickoff_idx on picks (kickoff_at desc);
 create index if not exists picks_status_idx on picks (status);
+
+-- ─────────────────────────────────────────────────────────────
+-- pick_proofs — bet-slip screenshots attached to a pick (usually at
+-- settle time) so the Proof tab's win/lose ledger can show visual
+-- evidence, not just a status label. Storage bucket below holds the
+-- actual image bytes; this table just points at them.
+-- ─────────────────────────────────────────────────────────────
+create table if not exists pick_proofs (
+  id uuid primary key default gen_random_uuid(),
+  pick_id uuid not null references picks (id) on delete cascade,
+  image_path text not null,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists pick_proofs_pick_idx on pick_proofs (pick_id);
+
+alter table pick_proofs enable row level security;
+
+drop policy if exists "no direct pick_proofs access" on pick_proofs;
+create policy "no direct pick_proofs access" on pick_proofs
+  for select using (false);
+  -- Reads go through /api/picks (ledger scope), which resolves
+  -- image_path to a public storage URL; writes go through
+  -- /api/picks/[id]/proofs using the service role.
+
+-- Public bucket: proof screenshots are meant to be shown to
+-- prospective subscribers as evidence of the win rate, so there's no
+-- reason to gate reads behind a signed URL. Only Route Handlers using
+-- the service role key can upload/delete (no anon insert policy).
+insert into storage.buckets (id, name, public)
+values ('proof-images', 'proof-images', true)
+on conflict (id) do nothing;
 
 -- ─────────────────────────────────────────────────────────────
 -- chat_messages — the VIP lounge. Starts empty; nothing here is

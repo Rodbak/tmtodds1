@@ -4,7 +4,7 @@ import { useApp } from "@/app/store/AppProvider";
 import { PickCard } from "./shared";
 
 export function SlipsTab() {
-  const { todayPicks, picksLoading, toggleSlip, slipItems } = useApp();
+  const { todayPicks, picksLoading, toggleSlip, slipItems, liveScores } = useApp();
   const isInSlip = (id: string) => slipItems.some((i) => i.pickId === id);
 
   return (
@@ -28,7 +28,15 @@ export function SlipsTab() {
             <span className="font-archivo text-[12px] text-text-muted">No picks posted yet today — check back soon.</span>
           </div>
         ) : (
-          todayPicks.map((p) => <PickCard key={p.id} pick={p} addedToSlip={isInSlip(p.id)} onToggle={() => toggleSlip(p.id)} />)
+          todayPicks.map((p) => (
+            <PickCard
+              key={p.id}
+              pick={p}
+              addedToSlip={isInSlip(p.id)}
+              onToggle={() => toggleSlip(p.id)}
+              liveScore={p.externalFixtureId ? liveScores[p.externalFixtureId] : undefined}
+            />
+          ))
         )}
       </div>
     </div>
