@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { planCoversTier, isPlanActive, ghsToPesewas, getPlan, PLANS, TIER_ORDER } from "./plans";
+import { planCoversTier, isPlanActive, ghsToPesewas, getPlan, applyPlanOverrides, PLANS, TIER_ORDER } from "./plans";
 
 describe("planCoversTier", () => {
   it("lets a null/no plan see only free content", () => {
@@ -86,5 +86,44 @@ describe("getPlan / PLANS", () => {
       expect(plan.priceGHS).toBeGreaterThan(0);
       expect(plan.periodDays).toBeGreaterThan(0);
     }
+  });
+});
+
+describe("applyPlanOverrides", () => {
+  it("replaces only the overridden plan's price, leaving the rest at defaults", () => {
+    const merged = applyPlanOverrides(PLANS, [{ plan: "pro", priceGHS: 200 }]);
+    expect(merged.find((p) => p.id === "pro")?.priceGHS).toBe(200);
+    expect(merged.find((p) => p.id === "weekly")?.priceGHS).toBe(PLANS.find((p) => p.id === "weekly")?.priceGHS);
+  });
+
+  it("overrides duration independently of price", () => {
+    const merged = applyPlanOverrides(PLANS, [{ plan: "weekly", periodDays: 10 }]);
+    const weekly = merged.find((p) => p.id === "weekly");
+    expect(weekly?.periodDays).toBe(10);
+    expect(weekly?.priceGHS).toBe(PLANS.find((p) => p.id === "weekly")?.priceGHS);
+  });
+
+  it("carries the hidden flag through", () => {
+    const merged = applyPlanOverrides(PLANS, [{ plan: "correct_score", hidden: true }]);
+    expect(merged.find((p) => p.id === "correct_score")?.hidden).toBe(true);
+    expect(merged.find((p) => p.id === "weekly")?.hidden).toBeFalsy();
+  });
+
+  it("ignores zero/negative/null price and period rather than breaking a plan", () => {
+    const merged = applyPlanOverrides(PLANS, [{ plan: "elite", priceGHS: 0, periodDays: null }]);
+    const elite = merged.find((p) => p.id === "elite");
+    const defaults = PLANS.find((p) => p.id === "elite");
+    expect(elite?.priceGHS).toBe(defaults?.priceGHS);
+    expect(elite?.periodDays).toBe(defaults?.periodDays);
+  });
+
+  it("returns defaults untouched with no overrides", () => {
+    expect(applyPlanOverrides(PLANS, [])).toEqual(PLANS);
+  });
+
+  it("does not mutate the input array", () => {
+    const before = PLANS.map((p) => p.priceGHS);
+    applyPlanOverrides(PLANS, [{ plan: "weekly", priceGHS: 999 }]);
+    expect(PLANS.map((p) => p.priceGHS)).toEqual(before);
   });
 });

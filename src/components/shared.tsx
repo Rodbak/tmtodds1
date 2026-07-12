@@ -168,6 +168,9 @@ export function LedgerRow({ pick }: { pick: PickDTO }) {
               <>{pick.market} · {formatShortDate(pick.kickoffAt)}</>
             )}
           </div>
+          {!pick.locked && pick.resultNote && (
+            <div className="font-archivo font-medium text-[11px] text-text-muted italic mt-0.5 truncate">{pick.resultNote}</div>
+          )}
         </div>
         <div className="text-right flex-shrink-0">
           <div className={`font-mono font-extrabold text-[14px] ${meta.color}`}>{meta.label}</div>

@@ -30,6 +30,12 @@ export function AuthModal({ onClose }: { onClose: () => void }) {
         setError("Enter your email first");
         return;
       }
+      if (!email.includes("@")) {
+        // Username accounts (created by admin for members without
+        // email) have nowhere to send a reset link.
+        setError("Username accounts don't have email — ask the admin to reset your password.");
+        return;
+      }
       setSubmitting(true);
       const res = await requestPasswordReset(email);
       setSubmitting(false);
@@ -54,7 +60,7 @@ export function AuthModal({ onClose }: { onClose: () => void }) {
 
     // mode === "login"
     if (!email || !password) {
-      setError("Email and password required");
+      setError("Email/username and password required");
       return;
     }
     setSubmitting(true);
@@ -86,9 +92,9 @@ export function AuthModal({ onClose }: { onClose: () => void }) {
         )}
         <input
           className="w-full bg-bg-primary border border-border-subtle rounded-[12px] px-4 py-3 font-archivo text-[13px] text-text-primary mb-3 outline-none focus:border-accent-lime"
-          placeholder="Email"
-          aria-label="Email"
-          type="email"
+          placeholder={mode === "login" ? "Email or username" : "Email"}
+          aria-label={mode === "login" ? "Email or username" : "Email"}
+          type={mode === "login" ? "text" : "email"}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />

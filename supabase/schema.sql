@@ -122,6 +122,58 @@ values ('proof-images', 'proof-images', true)
 on conflict (id) do nothing;
 
 -- ─────────────────────────────────────────────────────────────
+-- plan_prices — admin-set plan overrides (price, duration, and
+-- visibility). The defaults live in src/lib/plans.ts; a row here
+-- (written from the admin panel's plan-settings editor) takes
+-- precedence for the VIP tab display, the amount Paystack actually
+-- charges, and how long an activated plan lasts — all three read the
+-- same merged values, so they can never drift apart. A NULL price or
+-- period means "keep the default for that field".
+-- ─────────────────────────────────────────────────────────────
+create table if not exists plan_prices (
+  plan plan_id primary key,
+  price_ghs integer check (price_ghs > 0),
+  period_days integer check (period_days > 0),
+  hidden boolean not null default false,
+  updated_at timestamptz not null default now()
+);
+
+alter table plan_prices add column if not exists period_days integer check (period_days > 0);
+alter table plan_prices add column if not exists hidden boolean not null default false;
+alter table plan_prices alter column price_ghs drop not null;
+
+alter table plan_prices enable row level security;
+
+drop policy if exists "no direct plan_prices access" on plan_prices;
+create policy "no direct plan_prices access" on plan_prices
+  for select using (false);
+  -- Reads go through GET /api/plans (which merges these overrides
+  -- onto the defaults); writes go through the admin-only PATCH.
+
+-- ─────────────────────────────────────────────────────────────
+-- live_score_cache — one row per fixture, shared by every visitor.
+-- The /api/live-scores route serves from here and only calls the
+-- upstream scores API when a row is stale (see src/lib/liveScores.ts),
+-- so a hundred people watching a match costs the same upstream quota
+-- as one person.
+-- ─────────────────────────────────────────────────────────────
+create table if not exists live_score_cache (
+  fixture_id text primary key,
+  status text not null,
+  elapsed int,
+  home_score int,
+  away_score int,
+  fetched_at timestamptz not null default now()
+);
+
+alter table live_score_cache enable row level security;
+
+drop policy if exists "no direct live_score_cache access" on live_score_cache;
+create policy "no direct live_score_cache access" on live_score_cache
+  for select using (false);
+  -- Served via /api/live-scores using the service role.
+
+-- ─────────────────────────────────────────────────────────────
 -- chat_messages — the VIP lounge. Starts empty; nothing here is
 -- ever seeded, so every message a subscriber sees came from a real
 -- person. is_pinned lets admin surface one message as a banner at

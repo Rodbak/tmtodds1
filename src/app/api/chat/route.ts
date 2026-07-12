@@ -82,10 +82,18 @@ export async function GET(request: NextRequest) {
   if (!requiredTier) return NextResponse.json({ error: "Unknown channel" }, { status: 400 });
 
   const { profile } = await getSessionProfile();
+
+  // The lounge is members-only in both directions: even #general can't
+  // be read without signing in. lockReason tells the client which
+  // prompt to show -- "log in" vs "upgrade your plan".
+  if (!profile) {
+    return NextResponse.json({ locked: true, lockReason: "auth", items: [], pinned: null });
+  }
+
   const effectivePlan = effectivePlanFor(profile);
   const allowed = planCoversTier(effectivePlan, requiredTier);
 
-  if (!allowed) return NextResponse.json({ locked: true, items: [], pinned: null });
+  if (!allowed) return NextResponse.json({ locked: true, lockReason: "tier", items: [], pinned: null });
 
   const supabase = createAdminClient();
 

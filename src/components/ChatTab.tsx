@@ -14,6 +14,7 @@ export function ChatTab({ onShowAuth }: { onShowAuth: () => void }) {
     chatMessages,
     pinnedMessage,
     chatLocked,
+    chatLockReason,
     chatLoading,
     activeChannel,
     setActiveChannel,
@@ -96,10 +97,21 @@ export function ChatTab({ onShowAuth }: { onShowAuth: () => void }) {
           ) : chatLocked ? (
             <div className="text-center py-10">
               <Lock size={22} className="text-accent-gold mx-auto mb-3" />
-              <p className="font-archivo font-semibold text-[13px] text-text-secondary mb-3">This channel is part of a higher tier.</p>
-              <button onClick={() => setTab("vip")} className="font-archivo font-bold text-[12px] text-accent-lime">
-                See VIP packages →
-              </button>
+              {chatLockReason === "auth" ? (
+                <>
+                  <p className="font-archivo font-semibold text-[13px] text-text-secondary mb-3">The lounge is members-only — log in to read and chat.</p>
+                  <button onClick={onShowAuth} className="font-archivo font-bold text-[12px] text-accent-lime">
+                    Log in or create an account →
+                  </button>
+                </>
+              ) : (
+                <>
+                  <p className="font-archivo font-semibold text-[13px] text-text-secondary mb-3">This channel is part of a higher tier.</p>
+                  <button onClick={() => setTab("vip")} className="font-archivo font-bold text-[12px] text-accent-lime">
+                    See VIP packages →
+                  </button>
+                </>
+              )}
             </div>
           ) : (
             <>

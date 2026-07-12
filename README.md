@@ -86,6 +86,14 @@ supabase/schema.sql  Full DB schema + RLS policies
   bucket and shown as a tap-to-enlarge thumbnail strip on that pick's
   row in the Proof tab — visual backing for the win rate, grouped
   implicitly by the ledger's existing Won/Lost/Pending filter.
+- **Dashboard-controlled plans**: price, duration, and a hide/show
+  toggle per plan, editable in `/admin` with no deploy (`plan_prices`
+  table) — display, charge, and activation length all read the same
+  merged values.
+- **Admin-created members**: accounts for customers without email
+  (username + password; a placeholder address under the hood), with an
+  optional plan assigned at creation for cash/direct-MoMo sales, plus
+  a member list with plan management and password resets.
 - **SEO + PWA**: a dynamic sitemap, a brand-matched Open Graph share
   image generated at request time, and a web manifest with proper
   icons so the app can be added to a phone's home screen.

@@ -4,7 +4,8 @@ import { useCallback, useContext, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { AppContext as Ctx, type Tab, type SlipItem, type AuthResult, type LedgerFilter, type SendMessageOptions } from "./AppContext";
 import type { PickDTO, ChatMessageDTO, LedgerStats, Profile } from "@/lib/types";
-import type { PlanId } from "@/lib/plans";
+import { PLANS, type PlanId, type PlanDef } from "@/lib/plans";
+import { loginInputToEmail } from "@/lib/memberAuth";
 import { useLiveScores } from "@/lib/useLiveScores";
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
@@ -33,12 +34,27 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [chatMessages, setChatMessages] = useState<ChatMessageDTO[]>([]);
   const [pinnedMessage, setPinnedMessage] = useState<ChatMessageDTO | null>(null);
   const [chatLocked, setChatLocked] = useState(false);
+  const [chatLockReason, setChatLockReason] = useState<"auth" | "tier" | null>(null);
   const [chatLoading, setChatLoading] = useState(true);
   const [activeChannel, setActiveChannel] = useState("locked_vip");
 
-  // Billing
+  // Billing. Plans start from the compiled-in defaults and are
+  // replaced by the server's effective list (with any admin price
+  // overrides) as soon as it loads.
+  const [plans, setPlans] = useState<PlanDef[]>(PLANS);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
+
+  const fetchPlans = useCallback(async () => {
+    try {
+      const res = await fetch("/api/plans");
+      const json = await res.json();
+      if (Array.isArray(json.items) && json.items.length > 0) setPlans(json.items);
+    } catch {
+      // Defaults stay in place -- a pricing fetch hiccup shouldn't
+      // blank out the VIP tab.
+    }
+  }, []);
 
   const fetchProfile = useCallback(async () => {
     const {
@@ -92,6 +108,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const res = await fetch(`/api/chat?channel=${encodeURIComponent(channel)}`);
       const json = await res.json();
       setChatLocked(!!json.locked);
+      setChatLockReason(json.locked ? (json.lockReason === "auth" ? "auth" : "tier") : null);
       setChatMessages(json.items ?? []);
       setPinnedMessage(json.pinned ?? null);
     } finally {
@@ -109,6 +126,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     fetchProfile().finally(() => setAuthLoading(false));
     fetchToday();
     fetchLedger();
+    fetchPlans();
 
     const {
       data: { subscription },
@@ -117,7 +135,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       fetchToday(); // re-fetch: locking depends on the signed-in plan
     });
     return () => subscription.unsubscribe();
-  }, [supabase, fetchProfile, fetchToday, fetchLedger]);
+  }, [supabase, fetchProfile, fetchToday, fetchLedger, fetchPlans]);
 
   // Reload chat when the active channel changes, and poll gently while
   // the chat tab is open (simple, predictable "near real-time" without
@@ -147,7 +165,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     .map((p) => ({ pickId: p.id, odds: p.odds as number }));
 
   const login = async (email: string, password: string): Promise<AuthResult> => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    // Accepts a real email OR a username from an admin-created member
+    // account (mapped to its synthetic address -- see lib/memberAuth).
+    const { error } = await supabase.auth.signInWithPassword({ email: loginInputToEmail(email), password });
     if (error) return { ok: false, error: error.message };
     return { ok: true };
   };
@@ -220,6 +240,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     fetchToday();
     fetchLedger();
     fetchChat(activeChannel);
+    fetchPlans();
   };
 
   const value = {
@@ -244,11 +265,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     chatMessages,
     pinnedMessage,
     chatLocked,
+    chatLockReason,
     chatLoading,
     activeChannel,
     setActiveChannel,
     sendMessage,
     deleteMessage,
+    plans,
     startCheckout,
     checkoutLoading,
     checkoutError,

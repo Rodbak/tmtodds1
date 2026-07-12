@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Zap, LogIn, LogOut, Settings, Check } from "lucide-react";
 import { useApp } from "@/app/store/AppProvider";
 import { formatKickoff } from "@/lib/format";
+import { isPlanActive } from "@/lib/plans";
 import { StatCard, FormBadge, LiveScoreBadge } from "./shared";
 
 export function HomeTab({ onShowAuth }: { onShowAuth: () => void }) {
@@ -14,6 +15,15 @@ export function HomeTab({ onShowAuth }: { onShowAuth: () => void }) {
     .filter((p) => p.status === "won" || p.status === "lost" || p.status === "void")
     .slice(0, 7)
     .reverse();
+
+  // Don't push the VIP upsell at people it doesn't apply to: admins
+  // never see it, someone already on the top plan never sees it, and a
+  // subscriber on a lower plan gets a quieter "upgrade" version.
+  const hasActivePlan = !!profile && isPlanActive(profile.plan, profile.planExpiresAt);
+  const isAdmin = profile?.role === "admin";
+  const onTopPlan = hasActivePlan && profile?.plan === "correct_score";
+  const showVipCta = !isAdmin && !onTopPlan;
+  const vipCtaLabel = hasActivePlan ? "Upgrade your plan" : "Unlock VIP packages";
 
   return (
     <div className="px-4 pb-4 lg:px-8 lg:pb-10 lg:content-max">
@@ -129,10 +139,12 @@ export function HomeTab({ onShowAuth }: { onShowAuth: () => void }) {
 
       {/* CTA */}
       <div className="p-4 pt-5 lg:px-0 lg:pt-8 lg:max-w-md">
-        <button onClick={() => setTab("vip")} className="w-full bg-accent-lime rounded-[15px] p-4 flex items-center justify-center gap-2">
-          <Check size={19} className="text-bg-primary" />
-          <span className="font-archivo font-extrabold text-[15px] tracking-wide text-bg-primary">Unlock VIP packages</span>
-        </button>
+        {showVipCta && (
+          <button onClick={() => setTab("vip")} className="w-full bg-accent-lime rounded-[15px] p-4 flex items-center justify-center gap-2">
+            <Check size={19} className="text-bg-primary" />
+            <span className="font-archivo font-extrabold text-[15px] tracking-wide text-bg-primary">{vipCtaLabel}</span>
+          </button>
+        )}
         <div className="text-center font-archivo font-medium text-[11px] text-text-muted mt-3">
           18+ only · Gambling can be addictive ·{" "}
           <Link href="/legal/responsible-gambling" className="underline hover:text-text-secondary">

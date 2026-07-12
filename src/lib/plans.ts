@@ -12,6 +12,9 @@ export type PlanDef = {
   features: string[];
   ctaLabel: string;
   mostPopular?: boolean;
+  // Set from the plan_prices override table: a hidden plan stays out
+  // of the VIP tab and can't be checked out, but isn't deleted.
+  hidden?: boolean;
 };
 
 // Single source of truth for pricing and access. The VIP tab renders
@@ -76,6 +79,34 @@ export const PLANS: PlanDef[] = [
 
 export function getPlan(id: PlanId): PlanDef | undefined {
   return PLANS.find((p) => p.id === id);
+}
+
+export type PlanOverride = {
+  plan: PlanId;
+  priceGHS?: number | null;
+  periodDays?: number | null;
+  hidden?: boolean;
+};
+
+// Admin can change a plan's price, duration, or visibility from
+// /admin without a code deploy; the override lives in the plan_prices
+// table and wins over the defaults above. The VIP tab (via GET
+// /api/plans), the Paystack charge (initialize), and the activation
+// expiry (activateFromTransaction) all go through this same merge, so
+// what's displayed, what's charged, and how long it lasts can't
+// diverge. A null/absent field keeps that field's default.
+export function applyPlanOverrides(plans: PlanDef[], overrides: PlanOverride[]): PlanDef[] {
+  const byId = new Map(overrides.map((o) => [o.plan, o]));
+  return plans.map((p) => {
+    const o = byId.get(p.id);
+    if (!o) return p;
+    return {
+      ...p,
+      priceGHS: o.priceGHS != null && o.priceGHS > 0 ? o.priceGHS : p.priceGHS,
+      periodDays: o.periodDays != null && o.periodDays > 0 ? o.periodDays : p.periodDays,
+      hidden: o.hidden === true,
+    };
+  });
 }
 
 export function ghsToPesewas(ghs: number): number {

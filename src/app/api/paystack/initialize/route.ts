@@ -38,10 +38,19 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unknown plan" }, { status: 400 });
   }
 
-  const amountPesewas = ghsToPesewas(plan.priceGHS);
-  const reference = newReference();
-
   const db = createAdminClient();
+
+  // Admin can override a plan's price or pause it from /admin
+  // (plan_prices table); charge the same effective price the VIP tab
+  // displays, and refuse checkout for a paused plan.
+  const { data: override } = await db.from("plan_prices").select("price_ghs, hidden").eq("plan", plan.id).maybeSingle();
+  if (override?.hidden) {
+    return NextResponse.json({ error: "This plan is not available right now" }, { status: 400 });
+  }
+  const effectivePriceGHS = override?.price_ghs && override.price_ghs > 0 ? override.price_ghs : plan.priceGHS;
+
+  const amountPesewas = ghsToPesewas(effectivePriceGHS);
+  const reference = newReference();
   const { error: insertError } = await db.from("payments").insert({
     user_id: userId,
     plan: plan.id,

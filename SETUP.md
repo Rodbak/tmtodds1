@@ -45,12 +45,13 @@ database system" that was intentionally left for you to fill in.
    Rate Limits**, and turn on CAPTCHA (hCaptcha or Cloudflare Turnstile)
    under **Authentication → Attack Protection** if you want a bot
    deterrent on the signup form itself.
-8. **Already ran `schema.sql` before adding live scores/proof photos to
-   this codebase?** Re-run it — every statement is guarded with
+8. **Already ran `schema.sql` on an earlier version of this codebase?**
+   Re-run it after pulling new code — every statement is guarded with
    `if not exists` / `on conflict do nothing`, so it only adds what's
-   new: the `picks.external_fixture_id` column, the `pick_proofs`
-   table, and a public `proof-images` Storage bucket. Nothing existing
-   gets touched.
+   new (over time that has included `picks.external_fixture_id`, the
+   `pick_proofs` table, the `proof-images` Storage bucket, the
+   `plan_prices` overrides table with its duration/visibility columns,
+   and the `live_score_cache` table). Nothing existing gets touched.
 
 ## 2. Paystack
 
@@ -114,7 +115,28 @@ already-classified pick. Nothing to configure here beyond having run
 `schema.sql`; uploads go through `/api/picks/[id]/proofs` using the
 service-role key, same as every other admin write in this app.
 
-## 5. Google Analytics (optional)
+## 5. Plan settings and admin-created members
+
+Both of these live in the `/admin` dashboard and need no code deploy:
+
+- **Plan settings** — each plan's price (changes weekly? just edit and
+  save), its duration in days, and a Hide/Show toggle that takes a
+  plan off the VIP tab (and blocks checkout for it) without deleting
+  anything. The VIP tab display, the amount Paystack charges, and how
+  long an activated plan lasts all read the same saved values, so they
+  can't drift apart.
+- **Members** — create an account for a customer who has no email
+  address: name + username + starting password, optionally assigning
+  a paid plan at the same time (for cash / direct Mobile Money sales
+  — these get a `manual_...` row in the payments audit trail). The
+  member logs in by typing their **username** in the normal login box.
+  Under the hood, Supabase stores a synthetic address on the
+  placeholder domain `member.tmtodds.app` — nothing is ever emailed to
+  it, and the member never sees it. Because these accounts have no
+  real email, their **password resets happen in the member list**, not
+  through the "Forgot password?" flow.
+
+## 6. Google Analytics (optional)
 
 1. Create a GA4 property at [analytics.google.com](https://analytics.google.com), add a web data stream for your
    domain, and copy the **Measurement ID** (starts with `G-`).
@@ -124,7 +146,7 @@ service-role key, same as every other admin write in this app.
    banner shown on their first visit (see `src/components/Analytics.tsx`); "Decline" means it never loads for
    them. This is already reflected in the Privacy Policy draft.
 
-## 6. Running locally
+## 7. Running locally
 
 ```bash
 npm install
@@ -135,7 +157,7 @@ npm run dev
 Visit `http://localhost:3000`. Sign up, make yourself admin (step 5
 above), then visit `/admin` to post today's first pick.
 
-## 7. Deploying
+## 8. Deploying
 
 Any host that runs Next.js works. On Vercel, there are two ways
 Supabase ends up connected to the project — what matters is that every
@@ -173,7 +195,7 @@ Either way:
    project's database (SQL Editor → paste → run) — the integration
    only wires up the *connection*, it doesn't create any tables.
 
-## 8. Before you actually launch
+## 9. Before you actually launch
 
 A few things ship as drafts on purpose and need your input before real
 users see them:

@@ -1,6 +1,6 @@
 import { createContext } from "react";
 import type { PickDTO, ChatMessageDTO, LedgerStats, LiveScoreDTO, Profile } from "@/lib/types";
-import type { PlanId } from "@/lib/plans";
+import type { PlanId, PlanDef } from "@/lib/plans";
 
 export type Tab = "home" | "slips" | "proof" | "vip" | "chat";
 export type LedgerFilter = "all" | "won" | "lost" | "pending";
@@ -49,13 +49,18 @@ export type AppState = {
   chatMessages: ChatMessageDTO[];
   pinnedMessage: ChatMessageDTO | null;
   chatLocked: boolean;
+  // Why the channel is locked: "auth" = not signed in, "tier" = plan
+  // doesn't cover it. Drives which prompt the chat tab shows.
+  chatLockReason: "auth" | "tier" | null;
   chatLoading: boolean;
   activeChannel: string;
   setActiveChannel: (c: string) => void;
   sendMessage: (text: string, opts?: SendMessageOptions) => Promise<AuthResult>;
   deleteMessage: (id: string) => Promise<AuthResult>;
 
-  // Billing
+  // Billing -- `plans` is the effective list (defaults + any admin
+  // price overrides), fetched from GET /api/plans.
+  plans: PlanDef[];
   startCheckout: (planId: PlanId) => Promise<void>;
   checkoutLoading: boolean;
   checkoutError: string | null;

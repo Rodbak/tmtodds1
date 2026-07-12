@@ -115,8 +115,14 @@ export async function activateFromTransaction(transaction: {
   const plan = getPlan(payment.plan as PlanId);
   if (!plan) return { activated: false, reason: "unknown plan" };
 
+  // Duration can be overridden from the admin panel (plan_prices) --
+  // the activated plan lasts as long as the settings said at payment
+  // time, matching what the VIP tab advertised.
+  const { data: override } = await db.from("plan_prices").select("period_days").eq("plan", plan.id).maybeSingle();
+  const effectivePeriodDays = override?.period_days && override.period_days > 0 ? override.period_days : plan.periodDays;
+
   const msPerDay = 24 * 60 * 60 * 1000;
-  const expiresAt = new Date(Date.now() + plan.periodDays * msPerDay).toISOString();
+  const expiresAt = new Date(Date.now() + effectivePeriodDays * msPerDay).toISOString();
 
   await Promise.all([
     db.from("payments").update({ status: "success", raw_payload: transaction }).eq("reference", transaction.reference),
