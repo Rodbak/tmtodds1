@@ -117,6 +117,25 @@ describe("applyPlanOverrides", () => {
     expect(elite?.periodDays).toBe(defaults?.periodDays);
   });
 
+  it("overrides the display text fields independently", () => {
+    const merged = applyPlanOverrides(PLANS, [{ plan: "weekly", title: "TMT Starter", tag: "Entry", subtitle: "10 days of picks" }]);
+    const weekly = merged.find((p) => p.id === "weekly");
+    expect(weekly?.title).toBe("TMT Starter");
+    expect(weekly?.tag).toBe("Entry");
+    expect(weekly?.subtitle).toBe("10 days of picks");
+    // Untouched plan keeps its coded text.
+    expect(merged.find((p) => p.id === "pro")?.title).toBe(PLANS.find((p) => p.id === "pro")?.title);
+  });
+
+  it("treats empty/whitespace/null text overrides as 'keep the default'", () => {
+    const merged = applyPlanOverrides(PLANS, [{ plan: "weekly", title: "  ", tag: null, subtitle: "" }]);
+    const weekly = merged.find((p) => p.id === "weekly");
+    const defaults = PLANS.find((p) => p.id === "weekly");
+    expect(weekly?.title).toBe(defaults?.title);
+    expect(weekly?.tag).toBe(defaults?.tag);
+    expect(weekly?.subtitle).toBe(defaults?.subtitle);
+  });
+
   it("returns defaults untouched with no overrides", () => {
     expect(applyPlanOverrides(PLANS, [])).toEqual(PLANS);
   });

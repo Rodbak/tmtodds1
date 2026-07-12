@@ -91,7 +91,10 @@ export async function GET(request: NextRequest) {
   }
 
   const effectivePlan = effectivePlanFor(profile);
-  const allowed = planCoversTier(effectivePlan, requiredTier);
+  // Admin reads every channel regardless of their own plan -- they
+  // still had to sign in (the check above), this only skips the tier
+  // gate that applies to ordinary subscribers.
+  const allowed = profile.role === "admin" || planCoversTier(effectivePlan, requiredTier);
 
   if (!allowed) return NextResponse.json({ locked: true, lockReason: "tier", items: [], pinned: null });
 
@@ -142,7 +145,7 @@ export async function POST(request: NextRequest) {
 
   const requiredTier = CHANNEL_ACCESS[channel];
   if (!requiredTier) return NextResponse.json({ error: "Unknown channel" }, { status: 400 });
-  if (!planCoversTier(effectivePlanFor(profile), requiredTier)) {
+  if (!isAdmin && !planCoversTier(effectivePlanFor(profile), requiredTier)) {
     return NextResponse.json({ error: "Your plan doesn't include this channel" }, { status: 403 });
   }
 

@@ -86,15 +86,24 @@ export type PlanOverride = {
   priceGHS?: number | null;
   periodDays?: number | null;
   hidden?: boolean;
+  tag?: string | null;
+  title?: string | null;
+  subtitle?: string | null;
 };
 
-// Admin can change a plan's price, duration, or visibility from
-// /admin without a code deploy; the override lives in the plan_prices
-// table and wins over the defaults above. The VIP tab (via GET
-// /api/plans), the Paystack charge (initialize), and the activation
-// expiry (activateFromTransaction) all go through this same merge, so
-// what's displayed, what's charged, and how long it lasts can't
-// diverge. A null/absent field keeps that field's default.
+function textOverride(override: string | null | undefined, fallback: string): string {
+  const trimmed = override?.trim();
+  return trimmed ? trimmed : fallback;
+}
+
+// Admin can change a plan's price, duration, visibility, or display
+// text (tag/name/subtitle) from /admin without a code deploy; the
+// override lives in the plan_prices table and wins over the defaults
+// above. The VIP tab (via GET /api/plans), the Paystack charge
+// (initialize), and the activation expiry (activateFromTransaction)
+// all go through this same merge, so what's displayed, what's
+// charged, and how long it lasts can't diverge. A null/absent/empty
+// field keeps that field's default.
 export function applyPlanOverrides(plans: PlanDef[], overrides: PlanOverride[]): PlanDef[] {
   const byId = new Map(overrides.map((o) => [o.plan, o]));
   return plans.map((p) => {
@@ -105,6 +114,9 @@ export function applyPlanOverrides(plans: PlanDef[], overrides: PlanOverride[]):
       priceGHS: o.priceGHS != null && o.priceGHS > 0 ? o.priceGHS : p.priceGHS,
       periodDays: o.periodDays != null && o.periodDays > 0 ? o.periodDays : p.periodDays,
       hidden: o.hidden === true,
+      tag: textOverride(o.tag, p.tag),
+      title: textOverride(o.title, p.title),
+      subtitle: textOverride(o.subtitle, p.subtitle),
     };
   });
 }

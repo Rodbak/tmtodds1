@@ -135,11 +135,20 @@ create table if not exists plan_prices (
   price_ghs integer check (price_ghs > 0),
   period_days integer check (period_days > 0),
   hidden boolean not null default false,
+  -- Display-text overrides (all optional; NULL keeps the coded
+  -- default from src/lib/plans.ts): the small uppercase tag, the plan
+  -- name, and the subtitle line under it.
+  tag text,
+  title text,
+  subtitle text,
   updated_at timestamptz not null default now()
 );
 
 alter table plan_prices add column if not exists period_days integer check (period_days > 0);
 alter table plan_prices add column if not exists hidden boolean not null default false;
+alter table plan_prices add column if not exists tag text;
+alter table plan_prices add column if not exists title text;
+alter table plan_prices add column if not exists subtitle text;
 alter table plan_prices alter column price_ghs drop not null;
 
 alter table plan_prices enable row level security;

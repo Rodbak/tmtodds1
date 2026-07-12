@@ -327,18 +327,22 @@ function PendingPickCard({ pick, onSettled, liveScore }: { pick: PickDTO; onSett
   );
 }
 
-type PlanSettings = { id: string; title: string; priceGHS: number; periodDays: number; hidden?: boolean };
+type PlanSettings = { id: string; tag: string; title: string; subtitle: string; priceGHS: number; periodDays: number; hidden?: boolean };
+
+type PlanDraft = { price: string; days: string; tag: string; title: string; subtitle: string };
 
 /**
- * Plan settings editor: price, duration, and visibility per plan,
- * saving to the plan_prices override table -- the VIP tab, the actual
- * Paystack charge, and the activated plan's expiry all read the same
- * merged values, so what you set here is exactly what people see, pay,
- * and get. Prices changing week to week is the normal workflow here.
+ * Plan settings editor: display text (tag/name/subtitle), price,
+ * duration, and visibility per plan, saving to the plan_prices
+ * override table -- the VIP tab, the actual Paystack charge, and the
+ * activated plan's expiry all read the same merged values, so what
+ * you set here is exactly what people see, pay, and get. Prices
+ * changing week to week is the normal workflow here. Clearing a text
+ * field restores that field's built-in default.
  */
 function PlanSettingsEditor() {
   const [plans, setPlans] = useState<PlanSettings[]>([]);
-  const [drafts, setDrafts] = useState<Record<string, { price: string; days: string }>>({});
+  const [drafts, setDrafts] = useState<Record<string, PlanDraft>>({});
   const [savingId, setSavingId] = useState<string | null>(null);
   const [error, setError] = useState("");
 
@@ -347,7 +351,14 @@ function PlanSettingsEditor() {
     const json = await res.json();
     const items = (json.items ?? []) as PlanSettings[];
     setPlans(items);
-    setDrafts(Object.fromEntries(items.map((p) => [p.id, { price: String(p.priceGHS), days: String(p.periodDays) }])));
+    setDrafts(
+      Object.fromEntries(
+        items.map((p) => [
+          p.id,
+          { price: String(p.priceGHS), days: String(p.periodDays), tag: p.tag, title: p.title, subtitle: p.subtitle },
+        ])
+      )
+    );
   }, []);
 
   useEffect(() => {
@@ -378,56 +389,104 @@ function PlanSettingsEditor() {
     <section className="bg-bg-secondary border border-border-subtle rounded-[16px] p-5 mb-8">
       <h2 className="font-archivo font-extrabold text-[15px] mb-1">Plan settings</h2>
       <p className="font-archivo text-[12px] text-text-secondary mb-4">
-        Price and duration apply immediately to the VIP tab, what Paystack charges, and how long a new subscription lasts. Hiding a plan
-        takes it off the VIP tab (and blocks checkout) without deleting it.
+        Everything here applies immediately — the VIP tab, what Paystack charges, and how long a new subscription lasts. Hiding a plan takes
+        it off the VIP tab (and blocks checkout) without deleting it. Clearing a text box restores that field&apos;s built-in wording. If you
+        change a plan&apos;s duration, update the subtitle text to match — and avoid the word &quot;fixed&quot; in names (it&apos;s the
+        match-fixing scammers&apos; word; &quot;Locked&quot; is the brand&apos;s honest equivalent).
       </p>
-      <div className="flex flex-col gap-2.5">
+      <div className="flex flex-col gap-4">
         {plans.map((p) => {
-          const draft = drafts[p.id] ?? { price: "", days: "" };
-          const changed = draft.price !== String(p.priceGHS) || draft.days !== String(p.periodDays);
+          const draft = drafts[p.id] ?? { price: "", days: "", tag: "", title: "", subtitle: "" };
+          const changed =
+            draft.price !== String(p.priceGHS) ||
+            draft.days !== String(p.periodDays) ||
+            draft.tag !== p.tag ||
+            draft.title !== p.title ||
+            draft.subtitle !== p.subtitle;
           const busy = savingId === p.id;
+          const textInput = "bg-bg-primary border border-border-subtle rounded-[8px] px-2.5 py-1.5 font-archivo text-[12px] text-text-primary outline-none focus:border-accent-lime placeholder:text-text-muted";
           return (
-            <div key={p.id} className={`flex items-center gap-3 flex-wrap ${p.hidden ? "opacity-60" : ""}`}>
-              <span className="font-archivo font-bold text-[13px] w-[180px]">
-                {p.title}
-                {p.hidden && (
-                  <span className="ml-2 font-archivo font-extrabold text-[9px] tracking-wider uppercase px-1.5 py-0.5 rounded-[5px] bg-white/8 text-text-muted">hidden</span>
-                )}
-              </span>
-              <div className="flex items-center gap-1.5">
-                <span className="font-mono text-[13px] text-text-muted">₵</span>
+            <div key={p.id} className={`border border-border-subtle rounded-[12px] p-3 ${p.hidden ? "opacity-60" : ""}`}>
+              <div className="flex items-center justify-between gap-2 mb-2">
+                <span className="font-archivo font-bold text-[13px]">
+                  {p.title}
+                  {p.hidden && (
+                    <span className="ml-2 font-archivo font-extrabold text-[9px] tracking-wider uppercase px-1.5 py-0.5 rounded-[5px] bg-white/8 text-text-muted">hidden</span>
+                  )}
+                </span>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() =>
+                      patchPlan(p.id, {
+                        priceGHS: Number(draft.price),
+                        periodDays: Number(draft.days),
+                        tag: draft.tag,
+                        title: draft.title,
+                        subtitle: draft.subtitle,
+                      })
+                    }
+                    disabled={busy || !changed}
+                    className="text-[12px] font-archivo font-extrabold bg-accent-lime text-bg-primary rounded-[8px] px-3 py-1.5 disabled:opacity-40"
+                  >
+                    {busy ? "Saving…" : "Save"}
+                  </button>
+                  <button
+                    onClick={() => patchPlan(p.id, { hidden: !p.hidden })}
+                    disabled={busy}
+                    className="text-[12px] font-archivo font-extrabold bg-white/8 text-text-secondary rounded-[8px] px-3 py-1.5 disabled:opacity-40"
+                  >
+                    {p.hidden ? "Show" : "Hide"}
+                  </button>
+                </div>
+              </div>
+              <div className="grid sm:grid-cols-3 gap-2 mb-2">
                 <input
-                  value={draft.price}
-                  onChange={(e) => setDrafts((d) => ({ ...d, [p.id]: { ...draft, price: e.target.value } }))}
-                  inputMode="numeric"
-                  aria-label={`Price for ${p.title}`}
-                  className="w-20 bg-bg-primary border border-border-subtle rounded-[8px] px-2.5 py-1.5 font-mono text-[13px] text-text-primary outline-none focus:border-accent-lime"
+                  value={draft.tag}
+                  onChange={(e) => setDrafts((d) => ({ ...d, [p.id]: { ...draft, tag: e.target.value } }))}
+                  placeholder="Tag"
+                  aria-label={`Tag for ${p.title}`}
+                  maxLength={40}
+                  className={textInput}
+                />
+                <input
+                  value={draft.title}
+                  onChange={(e) => setDrafts((d) => ({ ...d, [p.id]: { ...draft, title: e.target.value } }))}
+                  placeholder="Plan name"
+                  aria-label={`Name for ${p.title}`}
+                  maxLength={60}
+                  className={textInput}
+                />
+                <input
+                  value={draft.subtitle}
+                  onChange={(e) => setDrafts((d) => ({ ...d, [p.id]: { ...draft, subtitle: e.target.value } }))}
+                  placeholder="Subtitle (e.g. 7 days · weekly)"
+                  aria-label={`Subtitle for ${p.title}`}
+                  maxLength={80}
+                  className={textInput}
                 />
               </div>
-              <div className="flex items-center gap-1.5">
-                <input
-                  value={draft.days}
-                  onChange={(e) => setDrafts((d) => ({ ...d, [p.id]: { ...draft, days: e.target.value } }))}
-                  inputMode="numeric"
-                  aria-label={`Duration in days for ${p.title}`}
-                  className="w-16 bg-bg-primary border border-border-subtle rounded-[8px] px-2.5 py-1.5 font-mono text-[13px] text-text-primary outline-none focus:border-accent-lime"
-                />
-                <span className="font-archivo text-[11px] text-text-muted">days</span>
+              <div className="flex items-center gap-3 flex-wrap">
+                <div className="flex items-center gap-1.5">
+                  <span className="font-mono text-[13px] text-text-muted">₵</span>
+                  <input
+                    value={draft.price}
+                    onChange={(e) => setDrafts((d) => ({ ...d, [p.id]: { ...draft, price: e.target.value } }))}
+                    inputMode="numeric"
+                    aria-label={`Price for ${p.title}`}
+                    className="w-20 bg-bg-primary border border-border-subtle rounded-[8px] px-2.5 py-1.5 font-mono text-[13px] text-text-primary outline-none focus:border-accent-lime"
+                  />
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <input
+                    value={draft.days}
+                    onChange={(e) => setDrafts((d) => ({ ...d, [p.id]: { ...draft, days: e.target.value } }))}
+                    inputMode="numeric"
+                    aria-label={`Duration in days for ${p.title}`}
+                    className="w-16 bg-bg-primary border border-border-subtle rounded-[8px] px-2.5 py-1.5 font-mono text-[13px] text-text-primary outline-none focus:border-accent-lime"
+                  />
+                  <span className="font-archivo text-[11px] text-text-muted">days</span>
+                </div>
               </div>
-              <button
-                onClick={() => patchPlan(p.id, { priceGHS: Number(draft.price), periodDays: Number(draft.days) })}
-                disabled={busy || !changed}
-                className="text-[12px] font-archivo font-extrabold bg-accent-lime text-bg-primary rounded-[8px] px-3 py-1.5 disabled:opacity-40"
-              >
-                {busy ? "Saving…" : "Save"}
-              </button>
-              <button
-                onClick={() => patchPlan(p.id, { hidden: !p.hidden })}
-                disabled={busy}
-                className="text-[12px] font-archivo font-extrabold bg-white/8 text-text-secondary rounded-[8px] px-3 py-1.5 disabled:opacity-40"
-              >
-                {p.hidden ? "Show" : "Hide"}
-              </button>
             </div>
           );
         })}

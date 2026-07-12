@@ -10,7 +10,9 @@ export function VipTab({ onShowAuth }: { onShowAuth: () => void }) {
   const { profile, plans, startCheckout, checkoutLoading, checkoutError } = useApp();
 
   const hasActivePlan = !!profile && isPlanActive(profile.plan, profile.planExpiresAt);
-  const currentPlanDef = hasActivePlan && profile?.plan ? getPlan(profile.plan) : undefined;
+  // Prefer the effective list so a renamed plan shows its current
+  // name; fall back to the compiled defaults before /api/plans loads.
+  const currentPlanDef = hasActivePlan && profile?.plan ? (plans.find((p) => p.id === profile.plan) ?? getPlan(profile.plan)) : undefined;
 
   return (
     <div className="px-4 pb-4 lg:px-8 lg:pb-10 lg:content-max">

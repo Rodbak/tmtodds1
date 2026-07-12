@@ -69,7 +69,7 @@ export function ChatTab({ onShowAuth }: { onShowAuth: () => void }) {
         <div className="flex gap-1.5 mt-4 overflow-x-auto scrollbar-hide lg:flex-col lg:overflow-visible lg:mt-3 lg:gap-1 lg:pb-6">
           {CHANNELS.map((c) => {
             const active = activeChannel === c.id;
-            const locked = !planCoversTier(effectivePlan, c.requiresTier);
+            const locked = !isAdmin && !planCoversTier(effectivePlan, c.requiresTier);
             return (
               <button
                 key={c.id}
